@@ -3,319 +3,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mega Marble Duel Arēna</title>
+    <title>Mega Marble Race Grand Prix</title>
     <style>
         body {
             margin: 0;
-            background: radial-gradient(circle, #1a1a2e 0%, #0f0f1a 100%);
+            background: #1a1a24;
             color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             overflow: hidden;
         }
-        h1 {
-            margin: 5px 0;
-            text-shadow: 0 0 10px rgba(255,255,255,0.3);
-            font-size: 24px;
-        }
-        #ui {
+        #game-container {
             display: flex;
-            gap: 40px;
-            margin-bottom: 15px;
-            font-size: 18px;
+            gap: 20px;
+            background: #242432;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        #sidebar {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 200px;
+        }
+        .panel {
+            background: #15151f;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        h2 { margin-top: 0; font-size: 18px; color: #00d2d3; text-align: center; }
+        .leader-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px;
+            border-radius: 5px;
             font-weight: bold;
         }
-        .hp-bar { display: flex; align-items: center; gap: 5px; }
-        .heart { color: #ff4757; font-size: 20px; text-shadow: 0 0 5px #ff4757; }
-        .heart.empty { color: #444; text-shadow: none; }
         canvas {
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(30, 144, 255, 0.2);
-            border-radius: 50%;
-            background-color: #05050a;
+            background: #0d0d13;
+            border: 3px solid #3d3d5c;
+            border-radius: 8px;
         }
         button {
-            padding: 10px 25px;
+            padding: 12px;
             font-size: 16px;
             font-weight: bold;
-            background: linear-gradient(45deg, #1e90ff, #ff4757);
+            background: #10ac84;
             color: white;
             border: none;
-            border-radius: 20px;
-            margin-bottom: 15px;
+            border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            transition: transform 0.2s;
+            transition: background 0.2s;
         }
-        button:hover { transform: scale(1.05); }
+        button:hover { background: #1dd1a1; }
     </style>
 </head>
 <body>
 
-    <h1>Bumbiņu Duelis: Arēna</h1>
-    <button onclick="resetGame()">Restartēt Dueli</button>
+<div id="game-container">
+    <canvas id="raceCanvas" width="450" height="650"></canvas>
     
-    <div id="ui">
-        <div class="hp-bar">Zilais: <span id="blue-hp"></span></div>
-        <div class="hp-bar">Sarkanais: <span id="red-hp"></span></div>
+    <div id="sidebar">
+        <div class="panel">
+            <h2>LĪDERI</h2>
+            <div id="leaderboard"></div>
+        </div>
+        
+        <button onclick="startRace()">Palaist jaunas sacīkstes</button>
     </div>
+</div>
 
-    <canvas id="arenaCanvas" width="600" height="600"></canvas>
+<script>
+    const canvas = document.getElementById('raceCanvas');
+    const ctx = canvas.getContext('2d');
 
-    <script>
-        const canvas = document.getElementById('arenaCanvas');
-        const ctx = canvas.getContext('2d');
+    const gravity = 0.15;
+    const bounce = 0.55;
+    const trackHeight = 2200; // Trases kopējais garums uz leju
+    let cameraY = 0;
 
-        const arenaRadius = 280;
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        const gravity = 0.12;
-        const bounce = 0.75;
+    let marbles = [];
+    let staticObstacles = [];
+    let spinners = [];
+    let finishedMarbles = [];
+    let raceOver = false;
 
-        let marbles = [];
-        let particles = [];
-        let rotationAngle = 0;
-        let gameOver = false;
-        let winnerText = "";
+    // Ģenerē trases šķēršļus
+    function generateTrack() {
+        staticObstacles = [
+            // Sākuma piltuve
+            { x1: 0, y1: 100, x2: 180, y2: 180 },
+            { x1: 450, y1: 100, x2: 270, y2: 180 },
+            // Zig-zag līnijas
+            { x1: 0, y1: 300, x2: 320, y2: 380 },
+            { x1: 450, y1: 500, x2: 130, y2: 580 },
+            { x1: 0, y1: 700, x2: 320, y2: 780 },
+            // Lielie slaidi zemāk
+            { x1: 100, y1: 1100, x2: 450, y2: 1200 },
+            { x1: 0, y1: 1350, x2: 350, y2: 1450 },
+            { x1: 100, y1: 1650, x2: 450, y2: 1750 },
+            // Finiša piltuve
+            { x1: 0, y1: 1950, x2: 180, y2: 2050 },
+            { x1: 450, y1: 1950, x2: 270, y2: 2050 }
+        ];
 
-        class Marble {
-            constructor(x, y, vx, vy, radius, color, name, hpId) {
-                this.x = x; this.y = y; this.vx = vx; this.vy = vy;
-                this.radius = radius; this.color = color; this.name = name;
-                this.hpId = hpId; this.maxHp = 3; this.hp = 3;
-                this.history = [];
-            }
-            update() {
-                this.vy += gravity;
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Saglabā astes efektu
-                this.history.push({x: this.x, y: this.y});
-                if (this.history.length > 8) this.history.shift();
-
-                // Sadursme ar apļveida arēnas sienu
-                let dx = this.x - centerX;
-                let dy = this.y - centerY;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist + this.radius > arenaRadius) {
-                    let nx = dx / dist;
-                    let ny = dy / dist;
-                    this.x = centerX + nx * (arenaRadius - this.radius);
-                    let dot = this.vx * nx + this.vy * ny;
-                    this.vx = (this.vx - 2 * dot * nx) * bounce;
-                    this.vy = (this.vy - 2 * dot * ny) * bounce;
-                    
-                    // Berze gar sienu un mazs randomness
-                    this.vx += (Math.random() - 0.5) * 0.2;
-                }
+        // Plinko tapas (mazi aplīši) vidusdaļā (no 850 līdz 1050 augstumam)
+        for(let row=0; row<4; row++) {
+            let pins = row % 2 === 0 ? 6 : 5;
+            for(let i=0; i<pins; i++) {
+                let x = (row % 2 === 0) ? (i * 80 + 25) : (i * 80 + 65);
+                let y = 850 + row * 50;
+                staticObstacles.push({ isPin: true, x: x, y: y, r: 6 });
             }
         }
 
-        function spawnParticles(x, y, color) {
-            for(let i=0; i<12; i++) {
-                particles.push({
-                    x: x, y: y,
-                    vx: (Math.random() - 0.5) * 6,
-                    vy: (Math.random() - 0.5) * 6,
-                    radius: Math.random() * 4 + 2,
-                    alpha: 1,
-                    color: color
-                });
-            }
-        }
+        // Rotējošie šķēršļi (spinners)
+        spinners = [
+            { x: 220, y: 440, size: 40, angle: 0, speed: 0.03 },
+            { x: 120, y: 1280, size: 45, angle: 0, speed: -0.02 },
+            { x: 320, y: 1550, size: 45, angle: 0, speed: 0.045 }
+        ];
+    }
 
-        function resetGame() {
-            gameOver = false;
-            winnerText = "";
-            particles = [];
-            marbles = [
-                new Marble(centerX - 80, centerY - 100, 2, 0, 16, '#1e90ff', 'Zilais', 'blue-hp'),
-                new Marble(centerX + 80, centerY - 100, -2, 0, 16, '#ff4757', 'Sarkanais', 'red-hp')
-            ];
-            updateUI();
-        }
+    function startRace() {
+        raceOver = false;
+        cameraY = 0;
+        finishedMarbles = [];
+        generateTrack();
 
-        function updateUI() {
-            ['blue-hp', 'red-hp'].forEach(id => {
-                const marble = marbles.find(m => m.hpId === id);
-                const el = document.getElementById(id);
-                if (!el) return;
-                let hearts = "";
-                let hpCount = marble ? marble.hp : 0;
-                for(let i=0; i<3; i++) {
-                    hearts += i < hpCount ? '<span class="heart">❤</span>' : '<span class="heart empty">❤</span>';
-                }
-                el.innerHTML = hearts;
-            });
-        }
+        marbles = [
+            { x: 150, y: 40, vx: 0, vy: 0, r: 10, color: '#ff4757', name: 'Sarkanā', rank: 1, done: false },
+            { x: 200, y: 40, vx: 0, vy: 0, r: 10, color: '#1e90ff', name: 'Zilā', rank: 2, done: false },
+            { x: 250, y: 40, vx: 0, vy: 0, r: 10, color: '#2ed573', name: 'Zaļā', rank: 3, done: false },
+            { x: 300, y: 40, vx: 0, vy: 0, r: 10, color: '#ffa502', name: 'Dzeltenā', rank: 4, done: false }
+        ];
+    }
 
-        function handleDuelCollisions() {
-            if (marbles.length < 2) return;
-            let m1 = marbles[0];
-            let m2 = marbles[1];
+    function getClosestPointOnLine(px, py, x1, y1, x2, y2) {
+        let abx = x2 - x1; let aby = y2 - y1;
+        let apx = px - x1; let apy = py - y1;
+        let ab_len_sq = abx * abx + aby * aby;
+        let t = Math.max(0, Math.min(1, (apx * abx + apy * aby) / ab_len_sq));
+        return { x: x1 + t * abx, y: y1 + t * aby };
+    }
 
-            let dx = m2.x - m1.x;
-            let dy = m2.y - m1.y;
-            let dist = Math.sqrt(dx * dx + dy * dy);
+    function update() {
+        // Rotē šķēršļus
+        spinners.forEach(s => s.angle += s.speed);
 
-            if (dist < m1.radius + m2.radius) {
-                let nx = dx / dist; let ny = dy / dist;
-                let kx = m1.vx - m2.vx; let ky = m1.vy - m2.vy;
-                let p = 2 * (kx * nx + ky * ny) / 2;
+        let leadingY = 0;
 
-                m1.vx -= p * nx; m1.vy -= p * ny;
-                m2.vx += p * nx; m2.vy += p * ny;
+        marbles.forEach(m => {
+            if (m.done) return;
 
-                // Aprēķina trieciena spēku
-                let tSpēks = Math.sqrt(kx*kx + ky*ky);
-                if (tSpēks > 3.5) { // Tikai spēcīgi triecieni atņem dzīvību
-                    let midX = (m1.x + m2.x) / 2;
-                    let midY = (m1.y + m2.y) / 2;
-                    
-                    if (Math.random() > 0.5) {
-                        m1.hp--; spawnParticles(midX, midY, m1.color);
-                    } else {
-                        m2.hp--; spawnParticles(midX, midY, m2.color);
+            m.vy += gravity;
+            m.x += m.vx; m.y += m.vy;
+
+            // Sienu sadursmes
+            if (m.x - m.r < 0) { m.x = m.r; m.vx = -m.vx * bounce; }
+            if (m.x + m.r > canvas.width) { m.x = canvas.width - m.r; m.vx = -m.vx * bounce; }
+
+            // Sadursmes ar statiskajām līnijām un tapām
+            staticObstacles.forEach(obs => {
+                if (obs.isPin) {
+                    let dx = m.x - obs.x; let dy = m.y - obs.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < m.r + obs.r) {
+                        let nx = dx / dist; let ny = dy / dist;
+                        m.x = obs.x + nx * (m.r + obs.r);
+                        let dot = m.vx * nx + m.vy * ny;
+                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 0.4;
+                        m.vy = (m.vy - 2 * dot * ny) * bounce;
                     }
-                    updateUI();
-                    checkGameOver();
+                } else {
+                    let closest = getClosestPointOnLine(m.x, m.y, obs.x1, obs.y1, obs.x2, obs.y2);
+                    let dx = m.x - closest.x; let dy = m.y - closest.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < m.r) {
+                        let nx = dx / dist; let ny = dy / dist;
+                        m.x = closest.x + nx * m.r;
+                        let dot = m.vx * nx + m.vy * ny;
+                        m.vx = (m.vx - 2 * dot * nx) * bounce;
+                        m.vy = (m.vy - 2 * dot * ny) * bounce;
+                        m.vx += (Math.random() - 0.5) * 0.1; // neļauj iesprūst
+                    }
                 }
-            }
-        }
-
-        function checkGameOver() {
-            if (marbles[0].hp <= 0) { gameOver = true; winnerText = "Sarkanais Uzvarēja!"; }
-            else if (marbles[1].hp <= 0) { gameOver = true; winnerText = "Zilais Uzvarēja!"; }
-        }
-
-        function handleObstacleCollision(m, rx, ry, size, angle) {
-            // Vienkāršota rotējoša šķēršļa līniju sadursme
-            let cx = centerX + rx;
-            let cy = centerY + ry;
-            let dx = m.x - cx;
-            let dy = m.y - cy;
-            let dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < size && dist > 10) {
-                m.vx = (Math.random() - 0.5) * 5 + Math.sin(angle)*3;
-                m.vy = -Math.abs(m.vy) * bounce - 1;
-            }
-        }
-
-        function update() {
-            if (gameOver) return;
-
-            rotationAngle += 0.01;
-
-            marbles.forEach(m => {
-                m.update();
-                // Sadursmes ar rotējošiem šķēršļiem centrā
-                handleObstacleCollision(m, 0, 0, 50, rotationAngle);
-                handleObstacleCollision(m, Math.cos(rotationAngle)*100, Math.sin(rotationAngle)*100, 25, -rotationAngle);
             });
 
-            handleDuelCollisions();
+            // Sadursmes ar rotējošajiem šķēršļiem
+            spinners.forEach(s => {
+                let dx = m.x - s.x; let dy = m.y - s.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < m.r + s.size) {
+                    let nx = dx / dist; let ny = dy / dist;
+                    m.x = s.x + nx * (m.r + s.size);
+                    // Atgrūž bumbiņu ar rotācijas spēku
+                    m.vx = nx * 4 + (Math.random() - 0.5) * 2;
+                    m.vy = ny * 3 - 1;
+                }
+            });
 
-            // Daļiņu (particles) kustība
-            for(let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx; p.y += p.vy; p.alpha -= 0.02;
-                if (p.alpha <= 0) particles.splice(i, 1);
+            // Finiša sasniegšana
+            if (m.y >= trackHeight - 50) {
+                m.done = true;
+                m.vx = 0; m.vy = 0;
+                finishedMarbles.push(m);
+                if (finishedMarbles.length === marbles.length) raceOver = true;
             }
+
+            if (m.y > leadingY && !m.done) leadingY = m.y;
+        });
+
+        // Kameru sekošana līderim
+        if (!raceOver && leadingY > canvas.height / 2) {
+            let targetCameraY = leadingY - canvas.height / 2;
+            cameraY += (targetCameraY - cameraY) * 0.1; // Maiga kameras kustība
+            if (cameraY > trackHeight - canvas.height) cameraY = trackHeight - canvas.height;
         }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Sakārto bumbiņas pēc pozīcijas (tiem, kas finišēja ir priekšroka)
+        let sorted = [...marbles].sort((a, b) => {
+            if (a.done && b.done) return finishedMarbles.indexOf(a) - finishedMarbles.indexOf(b);
+            if (a.done) return -1;
+            if (b.done) return 1;
+            return b.y - a.y;
+        });
 
-            // Zīmē arēnas fonu un režģi
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, arenaRadius, 0, Math.PI * 2);
-            ctx.fillStyle = '#0a0a16';
-            ctx.fill();
-            ctx.strokeStyle = '#1e90ff';
-            ctx.lineWidth = 4;
-            ctx.shadowBlur = 15; ctx.shadowColor = '#1e90ff';
-            ctx.stroke();
-            ctx.shadowBlur = 0; // Noņem spīdumu citiem elementiem
+        updateLeaderboardUI(sorted);
+    }
 
-            // Zīmē rotējošos šķēršļus arēnas vidū
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            ctx.rotate(rotationAngle);
-            ctx.fillStyle = '#ff9f43';
-            ctx.fillRect(-40, -6, 80, 12);
-            ctx.fillRect(-6, -40, 12, 80);
-            ctx.restore();
+    function updateLeaderboardUI(sortedMarbles) {
+        const board = document.getElementById('leaderboard');
+        board.innerHTML = '';
+        sortedMarbles.forEach((m, idx) => {
+            let placeStr = m.done ? `Finišs (${finishedMarbles.indexOf(m)+1}.)` : `${Math.round(m.y / 20)}m`;
+            board.innerHTML += `
+                <div class="leader-item" style="background: ${m.color}33; border-left: 5px solid ${m.color}">
+                    <span>${idx + 1}. ${m.name}</span>
+                    <span>${placeStr}</span>
+                </div>
+            `;
+        });
+    }
 
-            // Zīmē bumbiņu astes un pašas bumbiņas
-            marbles.forEach(m => {
-                // Aste
-                m.history.forEach((pos, idx) => {
-                    ctx.beginPath();
-                    ctx.arc(pos.x, pos.y, m.radius * (idx / m.history.length), 0, Math.PI * 2);
-                    ctx.fillStyle = m.color + "22"; // Caurspīdīga aste
-                    ctx.fill();
-                });
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // Bumbiņa
+        ctx.save();
+        ctx.translate(0, -cameraY); // Nobīda visu zīmējumu atbilstoši kamerai
+
+        // Zīmē statiskās līnijas un tapas
+        ctx.strokeStyle = '#706fd3';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        staticObstacles.forEach(obs => {
+            if (obs.isPin) {
                 ctx.beginPath();
-                ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
-                ctx.fillStyle = m.color;
+                ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI*2);
+                ctx.fillStyle = '#ffb142';
                 ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 3;
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(obs.x1, obs.y1);
+                ctx.lineTo(obs.x2, obs.y2);
                 ctx.stroke();
-                
-                // Acis vai sejiņa (kā video)
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(m.x - 4, m.y - 3, 3, 0, Math.PI*2);
-                ctx.arc(m.x + 4, m.y - 3, 3, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(m.x - 4, m.y - 3, 1, 0, Math.PI*2);
-                ctx.arc(m.x + 4, m.y - 3, 1, 0, Math.PI*2);
-                ctx.fill();
-            });
-
-            // Zīmē daļiņas (hit efektus)
-            particles.forEach(p => {
-                ctx.save();
-                ctx.globalAlpha = p.alpha;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-                ctx.restore();
-            });
-
-            // Spēles beigu ekrāns
-            if (gameOver) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, arenaRadius, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 32px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(winnerText, centerX, centerY);
             }
-        }
+        });
 
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
+        // Zīmē rotējošos šķēršļus
+        spinners.forEach(s => {
+            ctx.save();
+            ctx.translate(s.x, s.y);
+            ctx.rotate(s.angle);
+            ctx.fillStyle = '#ff5252';
+            // Zīmē krusta formu
+            ctx.fillRect(-s.size, -4, s.size*2, 8);
+            ctx.fillRect(-4, -s.size, 8, s.size*2);
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI*2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.restore();
+        });
 
-        resetGame();
-        gameLoop();
-    </script>
+        // Zīmē Finiša zonu
+        ctx.fillStyle = '#10ac84';
+        ctx.fillRect(0, trackHeight - 40, canvas.width, 40);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText("FINIŠA LĪNIJA", canvas.width / 2, trackHeight - 15);
+
+        // Zīmē bumbiņas
+        marbles.forEach(m => {
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+            ctx.fillStyle = m.color;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        });
+
+        ctx.restore(); // Atgriež kameru sākumpozīcijā priekš statiskā teksta
+
+        // Ja spēle beigusies, parāda pjedestālu uz ekrāna
+        if (raceOver) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 28px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText("SACĪKŠU REZULTĀTI", canvas.width / 2, 200);
+
+            finishedMarbles.slice(0, 3).forEach((m, idx) => {
+                ctx.font = '20px Arial';
+                ctx.fillStyle = m.color;
+                ctx.fillText(`${idx + 1}. Vieta: ${m.name} bumbiņa`, canvas.width / 2, 260 + idx * 40);
+            });
+        }
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    startRace();
+    gameLoop();
+</script>
+
 </body>
 </html>

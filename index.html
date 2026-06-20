@@ -165,9 +165,15 @@
             m.vy += gravity;
             m.x += m.vx; m.y += m.vy;
 
-            // Sienu sadursmes
-            if (m.x - m.r < 0) { m.x = m.r; m.vx = -m.vx * bounce; }
-            if (m.x + m.r > canvas.width) { m.x = canvas.width - m.r; m.vx = -m.vx * bounce; }
+            // Sienu sadursmes (Palielināts bounce, lai labāk atlec)
+            if (m.x - m.r < 0) { 
+                m.x = m.r; 
+                m.vx = -m.vx * (bounce + 0.1); 
+            }
+            if (m.x + m.r > canvas.width) { 
+                m.x = canvas.width - m.r; 
+                m.vx = -m.vx * (bounce + 0.1); 
+            }
 
             // Sadursmes ar statiskajām līnijām un tapām
             staticObstacles.forEach(obs => {
@@ -176,9 +182,11 @@
                     let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r + obs.r) {
                         let nx = dx / dist; let ny = dy / dist;
-                        m.x = obs.x + nx * (m.r + obs.r);
+                        m.x = obs.x + nx * (m.r + obs.r + 1); // Pārvieto nedaudz tālāk, lai neiestrūktu
                         let dot = m.vx * nx + m.vy * ny;
-                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 0.4;
+                        
+                        // Piešķir spēcīgāku un nejaušāku atsitienu
+                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 1.5;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
                     }
                 } else {
@@ -187,27 +195,38 @@
                     let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r) {
                         let nx = dx / dist; let ny = dy / dist;
-                        m.x = closest.x + nx * m.r;
+                        m.x = closest.x + nx * (m.r + 1); // Novērš iegrimšanu līnijā
                         let dot = m.vx * nx + m.vy * ny;
+                        
                         m.vx = (m.vx - 2 * dot * nx) * bounce;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
-                        m.vx += (Math.random() - 0.5) * 0.1; // neļauj iesprūst
+                        
+                        // Papildu impulss uz sāniem, lai bumbiņa uzreiz noslīdētu no slīpnes
+                        m.vx += nx * 0.5 + (Math.random() - 0.5) * 0.5;
                     }
                 }
             });
 
-            // Sadursmes ar rotējošajiem šķēršļiem
+            // Sadursmes ar rotējošajiem šķēršļiem (Padarītas agresīvākas)
             spinners.forEach(s => {
                 let dx = m.x - s.x; let dy = m.y - s.y;
                 let dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < m.r + s.size) {
                     let nx = dx / dist; let ny = dy / dist;
-                    m.x = s.x + nx * (m.r + s.size);
-                    // Atgrūž bumbiņu ar rotācijas spēku
-                    m.vx = nx * 4 + (Math.random() - 0.5) * 2;
-                    m.vy = ny * 3 - 1;
+                    m.x = s.x + nx * (m.r + s.size + 2);
+                    
+                    // Rotējošais šķērslis bumbiņu burtiski "aizsviež" prom
+                    m.vx = nx * 6 + (Math.random() - 0.5) * 2;
+                    m.vy = ny * 4 - 2;
                 }
             });
+
+            // GUMIJAS GLĀBŠANAS JOSLA (Anti-Stuck): 
+            // Ja bumbiņa gandrīz nekustas, iedodam tai grūdienu uz leju vai sāniem
+            if (Math.abs(m.vx) < 0.2 && Math.abs(m.vy) < 0.5) {
+                m.vx += (Math.random() - 0.5) * 1.5;
+                m.vy += 0.5;
+            }
 
             // Finiša sasniegšana
             if (m.y >= trackHeight - 50) {
@@ -223,11 +242,11 @@
         // Kameru sekošana līderim
         if (!raceOver && leadingY > canvas.height / 2) {
             let targetCameraY = leadingY - canvas.height / 2;
-            cameraY += (targetCameraY - cameraY) * 0.1; // Maiga kameras kustība
+            cameraY += (targetCameraY - cameraY) * 0.1;
             if (cameraY > trackHeight - canvas.height) cameraY = trackHeight - canvas.height;
         }
 
-        // Sakārto bumbiņas pēc pozīcijas (tiem, kas finišēja ir priekšroka)
+        // Sakārto bumbiņas pēc pozīcijas
         let sorted = [...marbles].sort((a, b) => {
             if (a.done && b.done) return finishedMarbles.indexOf(a) - finishedMarbles.indexOf(b);
             if (a.done) return -1;

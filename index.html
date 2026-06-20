@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ultimate Unpredictable Marble Race</title>
+    <title>Extreme Interactive Procedural Marble Race</title>
     <style>
         * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
         body {
@@ -77,10 +77,10 @@
         <div id="toggle-panel-btn" onclick="toggleSidebar()">⚙️</div>
 
         <div class="panel">
-            <h2>TRASAS REŽĪMS</h2>
-            <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">🎲 Dinamiskie Slīpumi (Procedurāli)</button>
-            <button class="map-btn" id="map1-btn" onclick="changeMap(1)">🎯 Bamperi & Nitro Slazdi</button>
-            <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 Mega Plinko Haoss</button>
+            <h2>TRASAS ĢENERĀCIJA</h2>
+            <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">⚙️ Rotējošie Propelleri</button>
+            <button class="map-btn" id="map1-btn" onclick="changeMap(1)">🚪 Kustīgie Slīdošie Vārti</button>
+            <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 Kinetiskais Plinko Labirints</button>
         </div>
 
         <div class="panel">
@@ -103,7 +103,6 @@
     const ctx = canvas.getContext('2d');
 
     const baseGravity = 0.52; 
-    const friction = 1.0; 
     const bounce = 0.6;   
     const trackHeight = 2500;
     let cameraY = 0;
@@ -113,7 +112,8 @@
     let lines = [];
     let pins = [];
     let bumpers = [];
-    let speedPads = []; // Jaunas nitro/paātrinājuma joslas
+    let spinners = []; // Jaunums: rotējošie šķēršļi
+    let movingSliders = []; // Jaunums: slīdošie vārti
     let finishedMarbles = [];
     let raceOver = false;
 
@@ -179,48 +179,58 @@
         marblesList.splice(index, 1); renderEditorUI();
     }
 
-    // JAUNUMS: Katru reizi pilnīgi nejauša trases ģenerēšana labākam atkalspēlēšanas priekam
+    // Pilnībā pārstrādātas, daudz labākas un dinamiskākas trases
     function buildTrack() {
-        lines = []; pins = []; bumpers = []; speedPads = [];
+        lines = []; pins = []; bumpers = []; spinners = []; movingSliders = [];
         
         lines.push({x1: 0, y1: 110, x2: 200, y2: 170}, {x1: 480, y1: 110, x2: 280, y2: 170});
         lines.push({x1: 0, y1: 2380, x2: 200, y2: 2430}, {x1: 480, y1: 2380, x2: 280, y2: 2430});
 
         if (currentMapIndex === 0) {
-            // PROCEDURĀLIE SLĪPUMI (Katru reizi citi izmēri un spraugas)
-            for (let y = 260; y < 2200; y += 230) {
-                let offset1 = (Math.random() - 0.5) * 40;
-                let offset2 = (Math.random() - 0.5) * 40;
-                lines.push({ x1: 0, y1: y, x2: 320 + offset1, y2: y + 130 });
-                lines.push({ x1: 480, y1: y + 110, x2: 160 + offset2, y2: y + 240 });
+            // ROTĒJOŠIE PROPELLERI
+            for (let y = 260; y < 2200; y += 220) {
+                let offset = (Math.random() - 0.5) * 40;
+                lines.push({ x1: 0, y1: y, x2: 300 + offset, y2: y + 120 });
+                lines.push({ x1: 480, y1: y + 110, x2: 180 - offset, y2: y + 230 });
                 
-                // Retumis ieliekam kādu nitro joslu uz nogāzēm
-                if(Math.random() > 0.6) {
-                    speedPads.push({x: 80 + Math.random()*300, y: y + 60, r: 18});
-                }
+                // Vidū starp rampām ieliekam rotējošus propellerus
+                spinners.push({
+                    x: 240 + (Math.random() - 0.5) * 60, y: y + 70, 
+                    angle: Math.random() * Math.PI, speed: 0.03 + Math.random() * 0.03, length: 55
+                });
             }
         } else if (currentMapIndex === 1) {
-            // BAMPERI UN NITRO SLAZDI
+            // KUSTĪGIE SLĪDOŠIE VĀRTI
             for (let y = 280; y < 2200; y += 260) {
-                lines.push({ x1: 0, y1: y, x2: 130, y2: y + 40 });
-                lines.push({ x1: 480, y1: y, x2: 350, y2: y + 40 });
+                lines.push({ x1: 0, y1: y, x2: 140, y2: y + 40 });
+                lines.push({ x1: 480, y1: y, x2: 340, y2: y + 40 });
                 
-                bumpers.push({ x: 240 + (Math.random() - 0.5)*50, y: y + 100, r: 25 });
-                speedPads.push({ x: 120 + Math.random()*240, y: y + 190, r: 20 });
+                bumpers.push({ x: 70, y: y + 130, r: 20 });
+                bumpers.push({ x: 410, y: y + 130, r: 20 });
+
+                // Vārti, kas slīd pa labi un pa kreisi
+                movingSliders.push({
+                    x: 240, y: y + 120, w: 120, h: 14, 
+                    dir: Math.random() > 0.5 ? 1 : -1, speed: 1.8 + Math.random() * 1.5,
+                    minX: 90, maxX: 390
+                });
             }
         } else if (currentMapIndex === 2) {
-            // HAOTISKAIS PLINKO
-            for (let y = 240; y < 2250; y += 90) {
-                let rowIdx = Math.floor(y / 90);
+            // KINETISKAIS PLINKO LABIRINTS
+            for (let y = 240; y < 2250; y += 95) {
+                let rowIdx = Math.floor(y / 95);
                 let count = (rowIdx % 2 === 0) ? 6 : 5;
                 let startX = (rowIdx % 2 === 0) ? 55 : 95;
                 for (let i = 0; i < count; i++) {
-                    // Pievienojam nelielu nobīdi katrai tapiņai, lai ceļš nav vienāds
-                    let randX = (Math.random() - 0.5) * 12;
-                    pins.push({ x: startX + i * 74 + randX, y: y, r: 5 });
+                    let randX = (Math.random() - 0.5) * 14;
+                    pins.push({ x: startX + i * 74 + randX, y: y, r: 5.5 });
                 }
-                if (Math.random() > 0.75) {
-                    bumpers.push({ x: 80 + Math.random()*320, y: y + 40, r: 16 });
+                // Ik pēc pāris rindām ieliekam mazu ātrgaitas spineri
+                if (rowIdx % 3 === 0) {
+                    spinners.push({
+                        x: 100 + Math.random() * 280, y: y + 45, 
+                        angle: Math.random() * Math.PI, speed: 0.05, length: 35
+                    });
                 }
             }
         }
@@ -242,7 +252,6 @@
         buildTrack(); marbles = [];
 
         marblesList.forEach((data, i) => {
-            // Pilnīgi haotisks starta novietojums neparedzamībai
             let startX = 140 + (i * (200 / (marblesList.length - 1 || 1))) + (Math.random() - 0.5) * 25;
             marbles.push({
                 x: startX, y: 30 - (i * 26), vx: (Math.random() - 0.5) * 5, vy: 3, r: 11,
@@ -262,21 +271,32 @@
     function update() {
         let leadingY = 0;
 
+        // Kustīgo vārtu loģika
+        movingSliders.forEach(s => {
+            s.x += s.dir * s.speed;
+            if (s.x - s.w/2 < s.minX) { s.x = s.minX + s.w/2; s.dir = 1; }
+            if (s.x + s.w/2 > s.maxX) { s.x = s.maxX - s.w/2; s.dir = -1; }
+        });
+
+        // Propelleru griešanās loģika
+        spinners.forEach(sp => {
+            sp.angle += sp.speed;
+        });
+
         marbles.forEach(m => {
             if (m.done) return;
 
-            // EKSPONENCIĀLS TURBO PAĀTRINĀJUMS (Aug katru sekundi uz leju)
             m.speedMultiplier += 0.0024; 
             let dynamicGravity = baseGravity * m.speedMultiplier;
 
             m.vy += dynamicGravity; 
             m.x += m.vx; m.y += m.vy;
 
-            // Atkušana pret sienām ar haosa piešvici
+            // Sienas
             if (m.x - m.r < 10) { m.x = m.r + 10; m.vx = Math.abs(m.vx) * bounce * m.speedMultiplier + Math.random(); }
             if (m.x + m.r > canvas.width - 10) { m.x = canvas.width - m.r - 10; m.vx = -Math.abs(m.vx) * bounce * m.speedMultiplier - Math.random(); }
 
-            // Rampas
+            // Rampas/Līnijas
             lines.forEach(line => {
                 let closest = getClosestPoint(m.x, m.y, line.x1, line.y1, line.x2, line.y2);
                 let dx = m.x - closest.x; let dy = m.y - closest.y;
@@ -285,10 +305,8 @@
                 if (dist < m.r) {
                     let nx = dx / (dist || 1); let ny = dy / (dist || 1);
                     m.x = closest.x + nx * (m.r + 0.1); m.y = closest.y + ny * (m.r + 0.1);
-
                     let dot = m.vx * nx + m.vy * ny;
-                    m.vx = (m.vx - 2 * dot * nx) * 0.25;
-                    m.vy = (m.vy - 2 * dot * ny) * 0.25;
+                    m.vx = (m.vx - 2 * dot * nx) * 0.25; m.vy = (m.vy - 2 * dot * ny) * 0.25;
 
                     let lx = line.x2 - line.x1; let ly = line.y2 - line.y1;
                     let lLen = Math.sqrt(lx*lx + ly*ly);
@@ -296,6 +314,55 @@
                         m.vx += (lx / lLen) * 1.35 * m.speedMultiplier + (Math.random() - 0.5);
                         m.vy += (ly / lLen) * 1.35 * m.speedMultiplier;
                     }
+                }
+            });
+
+            // Slīdošo vārtu sadursmes fizika
+            movingSliders.forEach(s => {
+                let sLeft = s.x - s.w/2; let sRight = s.x + s.w/2;
+                let sTop = s.y - s.h/2; let sBottom = s.y + s.h/2;
+
+                let closestX = Math.max(sLeft, Math.min(m.x, sRight));
+                let closestY = Math.max(sTop, Math.min(m.y, sBottom));
+
+                let dx = m.x - closestX; let dy = m.y - closestY;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < m.r) {
+                    let nx = dx / (dist || 1); let ny = dy / (dist || 1);
+                    m.x = closestX + nx * (m.r + 0.1); m.y = closestY + ny * (m.r + 0.1);
+                    
+                    let dot = m.vx * nx + m.vy * ny;
+                    m.vx = (m.vx - 2 * dot * nx) * bounce + s.dir * s.speed * 0.5;
+                    m.vy = (m.vy - 2 * dot * ny) * bounce;
+                }
+            });
+
+            // Rotējošo propelleru līniju sadursmes fizika
+            spinners.forEach(sp => {
+                let x1 = sp.x - Math.cos(sp.angle) * sp.length;
+                let y1 = sp.y - Math.sin(sp.angle) * sp.length;
+                let x2 = sp.x + Math.cos(sp.angle) * sp.length;
+                let y2 = sp.y + Math.sin(sp.angle) * sp.length;
+
+                let closest = getClosestPoint(m.x, m.y, x1, y1, x2, y2);
+                let dx = m.x - closest.x; let dy = m.y - closest.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < m.r) {
+                    let nx = dx / (dist || 1); let ny = dy / (dist || 1);
+                    m.x = closest.x + nx * (m.r + 0.1); m.y = closest.y + ny * (m.r + 0.1);
+
+                    // Propellera lineārais ātrums punktā
+                    let rx = closest.x - sp.x; let ry = closest.y - sp.y;
+                    let rDist = Math.sqrt(rx*rx + ry*ry);
+                    let tanX = -ry / (rDist || 1); let tanY = rx / (rDist || 1);
+                    let spinVel = rDist * sp.speed;
+                    let svX = tanX * spinVel; let svY = tanY * spinVel;
+
+                    let dot = (m.vx - svX) * nx + (m.vy - svY) * ny;
+                    m.vx = (m.vx - 2 * dot * nx) * bounce + svX * 0.8;
+                    m.vy = (m.vy - 2 * dot * ny) * bounce + svY * 0.8;
                 }
             });
 
@@ -321,16 +388,7 @@
                 }
             });
 
-            // NITRO JOSLAS (Uzkāpjot virsū, dod mega paātrinājumu uz leju)
-            speedPads.forEach(sp => {
-                let dx = m.x - sp.x; let dy = m.y - sp.y; let dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < m.r + sp.r) {
-                    m.vy += 4.5 * m.speedMultiplier; // Nitro grūdiens uz priekšu
-                    m.vx += (Math.random() - 0.5) * 3;
-                }
-            });
-
-            // ZRIPIENS (Izbraukšana cauri ar nelielu fizisku grūdienu vienai pret otru)
+            // Savstarpējās bumbiņu sadursmes ar haosu
             marbles.forEach(other => {
                 if (m === other || other.done) return;
                 let dx = other.x - m.x; let dy = other.y - m.y; let dist = Math.sqrt(dx*dx + dy*dy);
@@ -402,10 +460,25 @@
         lines.forEach(l => { ctx.beginPath(); ctx.moveTo(l.x1, l.y1); ctx.lineTo(l.x2, l.y2); ctx.stroke(); });
         ctx.shadowBlur = 0; 
 
-        // Nitro/Paātrinājuma joslas (Zaļi mirdzoši apļi)
-        speedPads.forEach(sp => {
-            ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI*2); ctx.fillStyle = 'rgba(16, 185, 129, 0.4)'; ctx.fill();
-            ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r - 6, 0, Math.PI*2); ctx.fillStyle = '#10b981'; ctx.fill();
+        // Kustīgie vārti
+        ctx.fillStyle = '#f59e0b';
+        movingSliders.forEach(s => {
+            ctx.fillRect(s.x - s.w/2, s.y - s.h/2, s.w, s.h);
+        });
+
+        // Rotējošie propelleri
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+        spinners.forEach(sp => {
+            ctx.beginPath();
+            let x1 = sp.x - Math.cos(sp.angle) * sp.length;
+            let y1 = sp.y - Math.sin(sp.angle) * sp.length;
+            let x2 = sp.x + Math.cos(sp.angle) * sp.length;
+            let y2 = sp.y + Math.sin(sp.angle) * sp.length;
+            ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+            ctx.stroke();
+            
+            // Centra ass propelleram
+            ctx.beginPath(); ctx.arc(sp.x, sp.y, 6, 0, Math.PI*2); ctx.fillStyle = '#ffffff'; ctx.fill();
         });
 
         // Tapiņas
@@ -437,7 +510,7 @@
 
         ctx.restore();
 
-        // Rezultātu logs
+        // Rezultātu logs uzvarētājiem
         if (raceOver) {
             ctx.fillStyle = 'rgba(5, 7, 15, 0.96)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 22px system-ui'; ctx.textAlign = 'center';

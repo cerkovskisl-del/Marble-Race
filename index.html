@@ -23,12 +23,15 @@
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-height: 95vh;
         }
         #sidebar {
             display: flex;
             flex-direction: column;
             gap: 15px;
-            width: 200px;
+            width: 320px;
+            overflow-y: auto;
+            padding-right: 5px;
         }
         .panel {
             background: #15151f;
@@ -36,7 +39,44 @@
             border-radius: 10px;
             border: 1px solid #333;
         }
-        h2 { margin-top: 0; font-size: 16px; color: #00d2d3; text-align: center; mb: 10px;}
+        h2 { margin-top: 0; font-size: 16px; color: #00d2d3; text-align: center; margin-bottom: 10px; }
+        
+        /* Bumbiņu saraksta stili */
+        #editor-rows-container {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding-right: 3px;
+        }
+        .marble-edit-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 6px;
+            align-items: center;
+            background: #1d1d2b;
+            padding: 4px;
+            border-radius: 6px;
+        }
+        .marble-edit-row input[type="text"] {
+            background: #2e2e42;
+            border: 1px solid #4d4d6e;
+            color: white;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .marble-name-input { width: 80px; }
+        .marble-img-input { flex-grow: 1; }
+        .marble-color-input { width: 30px; height: 24px; border: none; cursor: pointer; background: none; padding: 0; }
+        
+        .delete-btn {
+            background: #ff4757;
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+        }
+        .delete-btn:hover { background: #ff6b81; }
+
         .leader-item {
             display: flex;
             justify-content: space-between;
@@ -45,6 +85,11 @@
             border-radius: 5px;
             font-weight: bold;
             font-size: 14px;
+        }
+        /* Ja bumbiņu ir daudz, ierobežojam līderu saraksta vizuālo augstumu */
+        #leaderboard {
+            max-height: 180px;
+            overflow-y: auto;
         }
         canvas {
             background: #0d0d13;
@@ -64,6 +109,13 @@
         }
         button:hover { background: #1dd1a1; transform: scale(1.02); }
         
+        .secondary-btn {
+            background: #54a0ff;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .secondary-btn:hover { background: #70a1ff; }
+
         .map-btn {
             background: #2e2e42;
             border: 1px solid #4d4d6e;
@@ -78,10 +130,7 @@
             border-color: #5f27cd;
             color: #00d2d3;
         }
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-        }
+        .btn-group { display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
@@ -97,6 +146,12 @@
                 <button class="map-btn" id="map1-btn" onclick="changeMap(1)">2. Krustu haoss</button>
                 <button class="map-btn" id="map2-btn" onclick="changeMap(2)">3. Plinko kalns</button>
             </div>
+        </div>
+
+        <div class="panel">
+            <h2>BUMBIŅU SARAKSTS</h2>
+            <div id="editor-rows-container"></div>
+            <button class="secondary-btn" onclick="addMarbleRow()">+ Pievienot bumbiņu</button>
         </div>
 
         <div class="panel">
@@ -124,19 +179,81 @@
     let finishedMarbles = [];
     let raceOver = false;
 
-    // Karšu ģenerēšanas loģika
+    // Sākotnējais saraksts, kuru lietotājs var bezgalīgi papildināt
+    let marblesList = [
+        { name: 'Sarkanā', color: '#ff4757', imgUrl: '' },
+        { name: 'Zilā', color: '#1e90ff', imgUrl: '' },
+        { name: 'Zaļā', color: '#2ed573', imgUrl: '' },
+        { name: 'Dzeltenā', color: '#ffa502', imgUrl: '' }
+    ];
+
+    // Funkcija, kas pārzīmē redaktora rindas
+    function renderEditorUI() {
+        const container = document.getElementById('editor-rows-container');
+        container.innerHTML = '';
+
+        marblesList.forEach((marble, i) => {
+            container.innerHTML += `
+                <div class="marble-edit-row">
+                    <input type="color" class="marble-color-input" id="m-color-${i}" value="${marble.color}" onchange="saveUIData(${i})">
+                    <input type="text" class="marble-name-input" id="m-name-${i}" value="${marble.name}" placeholder="Vārds" onchange="saveUIData(${i})">
+                    <input type="text" class="marble-img-input" id="m-img-${i}" value="${marble.imgUrl}" placeholder="Bildes URL" onchange="saveUIData(${i})">
+                    <button class="delete-btn" onclick="deleteMarbleRow(${i})">X</button>
+                </div>
+            `;
+        });
+    }
+
+    // Saglabā ierakstīto info masīvā pirms pārzīmēšanas vai starta
+    function saveUIData(i) {
+        let nameVal = document.getElementById(`m-name-${i}`).value;
+        let colorVal = document.getElementById(`m-color-${i}`).value;
+        let imgVal = document.getElementById(`m-img-${i}`).value.trim();
+
+        marblesList[i].name = nameVal;
+        marblesList[i].color = colorVal;
+        marblesList[i].imgUrl = imgVal;
+    }
+
+    function saveAllUIData() {
+        marblesList.forEach((_, i) => saveUIData(i));
+    }
+
+    // Pievieno jaunu tukšu rindas ierakstu
+    function addMarbleRow() {
+        saveAllUIData();
+        // Uzģenerē random krāsu jaunajai bumbai
+        let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+        marblesList.push({
+            name: `Bumba ${marblesList.length + 1}`,
+            color: randomColor,
+            imgUrl: ''
+        });
+        renderEditorUI();
+    }
+
+    // Izdzēš konkrētu bumbiņu
+    function deleteMarbleRow(index) {
+        saveAllUIData();
+        if (marblesList.length <= 1) {
+            alert("Jāpaliek vismaz vienai bumbiņai!");
+            return;
+        }
+        marblesList.splice(index, 1);
+        renderEditorUI();
+    }
+
+    // Ģenerē trases šķēršļus
     function generateTrack() {
         staticObstacles = [];
         spinners = [];
 
-        // Standarta sākuma un finiša piltuves visām kartēm (drošas)
         staticObstacles.push({ x1: 0, y1: 100, x2: 180, y2: 180 });
         staticObstacles.push({ x1: 450, y1: 100, x2: 270, y2: 180 });
         staticObstacles.push({ x1: 0, y1: 2000, x2: 180, y2: 2080 });
         staticObstacles.push({ x1: 450, y1: 2000, x2: 270, y2: 2080 });
 
         if (currentMapIndex === 0) {
-            // 1. KARTE: Klasiskā ar slīpnēm un dažiem šķēršļiem
             staticObstacles.push(
                 { x1: 0, y1: 300, x2: 370, y2: 370 },
                 { x1: 80, y1: 550, x2: 450, y2: 620 },
@@ -145,8 +262,6 @@
                 { x1: 0, y1: 1500, x2: 370, y2: 1570 },
                 { x1: 80, y1: 1750, x2: 450, y2: 1830 }
             );
-
-            // Plinko tapas pa vidu
             for(let row=0; row<5; row++) {
                 let pins = row % 2 === 0 ? 6 : 5;
                 for(let i=0; i<pins; i++) {
@@ -154,23 +269,16 @@
                     staticObstacles.push({ isPin: true, x: x, y: 960 + row * 45, r: 6 });
                 }
             }
-
             spinners = [
                 { x: 220, y: 460, size: 40, angle: 0, speed: 0.03 },
                 { x: 150, y: 1380, size: 45, angle: 0, speed: -0.02 },
                 { x: 300, y: 1650, size: 42, angle: 0, speed: 0.04 }
             ];
-
         } else if (currentMapIndex === 1) {
-            // 2. KARTE: Krustu haoss (daudz rotējošu krustu, maz līniju)
             staticObstacles.push(
-                { x1: 0, y1: 600, x2: 150, y2: 640 },
-                { x1: 300, y1: 640, x2: 450, y2: 600 },
-                { x1: 0, y1: 1300, x2: 200, y2: 1350 },
-                { x1: 250, y1: 1350, x2: 450, y2: 1300 }
+                { x1: 0, y1: 600, x2: 150, y2: 640 }, { x1: 300, y1: 640, x2: 450, y2: 600 },
+                { x1: 0, y1: 1300, x2: 200, y2: 1350 }, { x1: 250, y1: 1350, x2: 450, y2: 1300 }
             );
-
-            // Savieto daudz rotējošus krustus visā trases garumā
             let spinnerPositions = [
                 {x: 130, y: 280, sz: 35, sp: 0.04},  {x: 320, y: 280, sz: 35, sp: -0.04},
                 {x: 225, y: 440, sz: 50, sp: 0.025},
@@ -180,35 +288,24 @@
                 {x: 225, y: 1500, sz: 55, sp: 0.015},
                 {x: 130, y: 1720, sz: 40, sp: -0.04}, {x: 320, y: 1720, sz: 40, sp: 0.04}
             ];
-
             spinnerPositions.forEach(pos => {
                 spinners.push({ x: pos.x, y: pos.y, size: pos.sz, angle: Math.random()*5, speed: pos.sp });
             });
-
         } else if (currentMapIndex === 2) {
-            // 3. KARTE: Plinko kalns (milzīgs tapu lauks)
-            // Lielas sienas-piltuves trases struktūrai
             staticObstacles.push(
                 { x1: 0, y1: 400, x2: 140, y2: 460 }, { x1: 450, y1: 400, x2: 310, y2: 460 },
                 { x1: 0, y1: 1000, x2: 140, y2: 1060 }, { x1: 450, y1: 1000, x2: 310, y2: 1060 },
                 { x1: 0, y1: 1600, x2: 140, y2: 1660 }, { x1: 450, y1: 1600, x2: 310, y2: 1660 }
             );
-
-            // Ģenerē tapu tīklu cauri visai kartei
             for (let y = 240; y < 1950; y += 65) {
-                // Izlaiž vietas, kur pārklājas ar vadlīnijām
                 if((y>380 && y<480) || (y>980 && y<1080) || (y>1580 && y<1680)) continue;
-
                 let isEven = (Math.floor(y / 65) % 2 === 0);
                 let pinsCount = isEven ? 7 : 6;
                 let startX = isEven ? 20 : 52;
-
                 for (let i = 0; i < pinsCount; i++) {
                     staticObstacles.push({ isPin: true, x: startX + i * 65, y: y + (Math.random()-0.5)*4, r: 6 });
                 }
             }
-            
-            // Daži mazi rotoriņi kā pārsteiguma elementi
             spinners.push(
                 { x: 225, y: 430, size: 25, angle: 0, speed: 0.05 },
                 { x: 225, y: 1030, size: 25, angle: 0, speed: -0.05 },
@@ -219,26 +316,43 @@
 
     function changeMap(index) {
         currentMapIndex = index;
-        // Atjaunina pogu vizuālo izskatu
-        for(let i=0; i<3; i++) {
-            document.getElementById(`map${i}-btn`).classList.remove('active');
-        }
+        for(let i=0; i<3; i++) document.getElementById(`map${i}-btn`).classList.remove('active');
         document.getElementById(`map${index}-btn`).classList.add('active');
         startRace();
     }
 
     function startRace() {
+        saveAllUIData();
         raceOver = false;
         cameraY = 0;
         finishedMarbles = [];
         generateTrack();
 
-        marbles = [
-            { x: 150, y: 40, vx: 0, vy: 0, r: 10, color: '#ff4757', name: 'Sarkanā', done: false },
-            { x: 200, y: 40, vx: 0, vy: 0, r: 10, color: '#1e90ff', name: 'Zilā', done: false },
-            { x: 250, y: 40, vx: 0, vy: 0, r: 10, color: '#2ed573', name: 'Zaļā', done: false },
-            { x: 300, y: 40, vx: 0, vy: 0, r: 10, color: '#ffa502', name: 'Dzeltenā', done: false }
-        ];
+        marbles = [];
+
+        marblesList.forEach((data, i) => {
+            let imgObj = null;
+            if (data.imgUrl !== '') {
+                imgObj = new Image();
+                imgObj.src = data.imgUrl;
+            }
+
+            // Ja bumbiņu ir ļoti daudz, liekam tās nejaušā pozīcijā augšā, lai nesaspiestos vienā vietā
+            let startX = 50 + Math.random() * 350;
+            let startY = 20 - (Math.random() * 30); // daļa sāk nedaudz augstāk gaisā
+
+            marbles.push({
+                x: startX,
+                y: startY,
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: 0,
+                r: 10,
+                color: data.color,
+                name: data.name,
+                img: imgObj,
+                done: false
+            });
+        });
     }
 
     function getClosestPointOnLine(px, py, x1, y1, x2, y2) {
@@ -251,7 +365,6 @@
 
     function update() {
         spinners.forEach(s => s.angle += s.speed);
-
         let leadingY = 0;
 
         marbles.forEach(m => {
@@ -291,6 +404,26 @@
                 }
             });
 
+            // Savstarpējā bumbiņu grūstīšanās, ja to ir daudz (vienkāršotā fizika veiktspējai)
+            marbles.forEach(other => {
+                if (m === other || other.done) return;
+                let dx = other.x - m.x;
+                let dy = other.y - m.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < m.r + other.r) {
+                    let overlap = (m.r + other.r) - dist;
+                    let nx = dx / (dist || 1);
+                    let ny = dy / (dist || 1);
+                    // Atbīda vienu no otras
+                    m.x -= nx * overlap * 0.5;
+                    m.y -= ny * overlap * 0.5;
+                    // Samaina ātrumus nedaudz
+                    let tempX = m.vx;
+                    m.vx = other.vx * 0.8;
+                    other.vx = tempX * 0.8;
+                }
+            });
+
             // Sadursmes ar spinneriem
             spinners.forEach(s => {
                 let dx = m.x - s.x; let dy = m.y - s.y;
@@ -303,7 +436,7 @@
                 }
             });
 
-            // Pret-iestrūkšanas drošība (Anti-Stuck)
+            // Anti-Stuck sistēma
             if (Math.abs(m.vx) < 0.25 && Math.abs(m.vy) < 0.5) {
                 m.vx += (Math.random() - 0.5) * 2;
                 m.vy += 0.6;
@@ -327,7 +460,6 @@
             if (cameraY > trackHeight - canvas.height) cameraY = trackHeight - canvas.height;
         }
 
-        // Kārtošana līderu sarakstam
         let sorted = [...marbles].sort((a, b) => {
             if (a.done && b.done) return finishedMarbles.indexOf(a) - finishedMarbles.indexOf(b);
             if (a.done) return -1;
@@ -391,7 +523,7 @@
             ctx.restore();
         });
 
-        // Zīmē Finišu
+        // Finiša līnija
         ctx.fillStyle = '#10ac84';
         ctx.fillRect(0, trackHeight - 40, canvas.width, 40);
         ctx.fillStyle = '#fff';
@@ -401,30 +533,41 @@
 
         // Zīmē bumbiņas
         marbles.forEach(m => {
+            ctx.save();
             ctx.beginPath();
             ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
-            ctx.fillStyle = m.color;
-            ctx.fill();
+            ctx.closePath();
+
+            if (m.img && m.img.complete && m.img.naturalWidth !== 0) {
+                ctx.clip();
+                ctx.drawImage(m.img, m.x - m.r, m.y - m.r, m.r * 2, m.r * 2);
+            } else {
+                ctx.fillStyle = m.color;
+                ctx.fill();
+            }
+            
             ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1.5;
             ctx.stroke();
+            ctx.restore();
         });
 
         ctx.restore();
 
-        // Rezultātu logi
+        // Rezultātu logs (rāda tikai TOP 5, lai neaizpildītu visu ekrānu pie bezgalīga skaita)
         if (raceOver) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 28px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText("SACĪKŠU REZULTĀTI", canvas.width / 2, 200);
+            ctx.fillText("SACĪKŠU REZULTĀTI", canvas.width / 2, 160);
 
-            finishedMarbles.slice(0, 3).forEach((m, idx) => {
-                ctx.font = '20px Arial';
+            finishedMarbles.forEach((m, idx) => {
+                if (idx > 4) return; 
+                ctx.font = '18px Arial';
                 ctx.fillStyle = m.color;
-                ctx.fillText(`${idx + 1}. Vieta: ${m.name} bumbiņa`, canvas.width / 2, 260 + idx * 40);
+                ctx.fillText(`${idx + 1}. Vieta: ${m.name}`, canvas.width / 2, 230 + idx * 35);
             });
         }
     }
@@ -435,6 +578,8 @@
         requestAnimationFrame(gameLoop);
     }
 
+    // Inicializācija
+    renderEditorUI();
     startRace();
     gameLoop();
 </script>

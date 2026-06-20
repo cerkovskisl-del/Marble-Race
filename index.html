@@ -1,177 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ultimate Marble Neon Grand Prix - Fixed Physics</title>
+    <title>Neon Marble Race - Supercharged</title>
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-user-select: none;
-            user-select: none;
-        }
+        * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
         body {
-            margin: 0; padding: 0;
-            background: #050508; color: white;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0; background: #030305; color: white;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             display: flex; align-items: center; justify-content: center;
             width: 100vw; height: 100vh; overflow: hidden;
         }
-        
-        #game-container {
-            position: relative;
-            display: flex;
-            width: 100%; height: 100%;
-            background: #09090d;
-            overflow: hidden;
-        }
-
-        #canvas-container {
-            flex: 1;
-            display: flex; align-items: center; justify-content: center;
-            height: 100%; width: 100%;
-            padding: 10px;
-        }
+        #game-container { position: relative; display: flex; width: 100%; height: 100%; background: #060609; }
+        #canvas-container { flex: 1; display: flex; align-items: center; justify-content: center; height: 100%; padding: 10px; }
         canvas {
-            background: #020204;
-            border: 3px solid #1f1f30;
-            border-radius: 16px;
-            max-height: 100%; max-width: 100%;
-            object-fit: contain;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+            background: #010103; border: 3px solid #1a1a26; border-radius: 12px;
+            max-height: 100%; max-width: 100%; object-fit: contain;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
         }
-
         #sidebar {
-            width: 350px; height: 100%;
-            background: #0a0a0f;
-            border-left: 2px solid #1a1a26;
-            display: flex; flex-direction: column;
-            gap: 12px; padding: 20px;
-            overflow-y: auto;
-            z-index: 100;
+            width: 340px; height: 100%; background: #09090e; border-left: 2px solid #14141f;
+            display: flex; flex-direction: column; gap: 12px; padding: 15px; overflow-y: auto; z-index: 100;
         }
-
         #toggle-panel-btn {
-            display: none;
-            position: absolute;
-            left: -55px; top: 15px;
-            width: 45px; height: 45px;
-            background: #341f97;
-            border: 2px solid #5f27cd;
-            border-radius: 50%;
-            color: white; font-size: 18px;
-            cursor: pointer; align-items: center; justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            z-index: 101;
+            display: none; position: absolute; left: -50px; top: 15px; width: 40px; height: 40px;
+            background: #341f97; border: 2px solid #5f27cd; border-radius: 50%; color: white;
+            font-size: 16px; cursor: pointer; align-items: center; justify-content: center; z-index: 101;
         }
-
-        .panel {
-            background: #030305;
-            padding: 14px; border-radius: 12px;
-            border: 1px solid #14141f;
-        }
-        h2 { margin-top: 0; font-size: 12px; color: #00d2d3; text-align: center; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1.5px;}
-        
-        #editor-rows-container {
-            max-height: 180px; overflow-y: auto; margin-bottom: 8px;
-        }
+        .panel { background: #020204; padding: 12px; border-radius: 10px; border: 1px solid #12121a; }
+        h2 { margin-top: 0; font-size: 11px; color: #00d2d3; text-align: center; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        #editor-rows-container { max-height: 160px; overflow-y: auto; }
         .marble-edit-row {
-            display: flex; gap: 6px; margin-bottom: 6px; align-items: center;
-            background: #0d0d14; padding: 6px; border-radius: 8px; border: 1px solid #1f1f30;
+            display: flex; gap: 5px; margin-bottom: 5px; align-items: center;
+            background: #0b0b10; padding: 5px; border-radius: 6px; border: 1px solid #1a1a26;
         }
         .marble-edit-row input[type="text"] {
-            background: #14141f; border: 1px solid #252538; color: white;
-            padding: 6px; border-radius: 6px; font-size: 13px; outline: none;
+            background: #12121a; border: 1px solid #222232; color: white; padding: 5px; border-radius: 4px; font-size: 12px; width: 100%;
         }
-        .marble-name-input { width: 90px; }
-        .marble-img-input { flex-grow: 1; }
-        .marble-color-input { width: 32px; height: 28px; border: none; cursor: pointer; background: none; padding: 0; }
-        
-        .delete-btn {
-            background: #ff4757; padding: 6px 10px; font-size: 12px;
-            border-radius: 6px; font-weight: bold; border: none; color: white; cursor: pointer;
-        }
-        .delete-btn:hover { background: #ff6b81; }
-
-        #leaderboard { max-height: 140px; overflow-y: auto; }
-        .leader-item {
-            display: flex; justify-content: space-between; margin: 5px 0;
-            padding: 8px; border-radius: 8px; font-weight: bold; font-size: 13px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        button {
-            padding: 12px; font-size: 14px; font-weight: bold;
-            background: #10ac84; color: white; border: none; border-radius: 8px;
-            cursor: pointer; transition: all 0.2s;
-        }
-        button:hover { background: #1dd1a1; transform: translateY(-1px); }
-        
-        .secondary-btn { background: #14141f; border: 1px solid #252538; width: 100%; margin-bottom: 2px; }
-        .secondary-btn:hover { background: #1f1f30; }
-
-        .map-btn {
-            background: #0d0d14; border: 1px solid #1f1f30; margin-bottom: 6px;
-            width: 100%; text-align: left; padding: 11px 14px; font-size: 13px; border-radius: 8px; color: #a4b0be;
-        }
-        .map-btn.active {
-            background: #341f97; border-color: #5f27cd; color: #00d2d3;
-            box-shadow: 0 0 10px rgba(95, 39, 205, 0.5);
-        }
-
-        #portrait-warning {
-            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #020204; z-index: 9999; flex-direction: column;
-            align-items: center; justify-content: center; text-align: center; padding: 20px;
-        }
-
+        .marble-color-input { width: 30px; height: 26px; border: none; cursor: pointer; background: none; }
+        .delete-btn { background: #ff4757; padding: 5px 8px; font-size: 11px; border-radius: 4px; border: none; color: white; cursor: pointer; }
+        #leaderboard { max-height: 150px; overflow-y: auto; }
+        .leader-item { display: flex; justify-content: space-between; margin: 4px 0; padding: 6px; border-radius: 6px; font-weight: bold; font-size: 12px; }
+        button { padding: 10px; font-size: 13px; font-weight: bold; background: #10ac84; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        button:hover { background: #1dd1a1; }
+        .secondary-btn { background: #12121a; border: 1px solid #222232; width: 100%; }
+        .map-btn { background: #0b0b10; border: 1px solid #1a1a26; margin-bottom: 5px; width: 100%; text-align: left; padding: 10px; color: #a4b0be; border-radius: 6px; }
+        .map-btn.active { background: #341f97; border-color: #5f27cd; color: #00d2d3; }
+        #portrait-warning { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #010103; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         @media (max-width: 900px) and (orientation: landscape) {
-            #sidebar { position: absolute; right: 0; top: 0; background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(10px); }
+            #sidebar { position: absolute; right: 0; top: 0; background: rgba(9, 9, 14, 0.95); backdrop-filter: blur(8px); }
             #sidebar.hidden { transform: translateX(100%); }
             #toggle-panel-btn { display: flex; }
         }
-        @media (orientation: portrait) {
-            #portrait-warning { display: flex; }
-            #game-container { display: none; }
-        }
+        @media (orientation: portrait) { #portrait-warning { display: flex; } #game-container { display: none; } }
     </style>
 </head>
 <body>
 
 <div id="portrait-warning">
-    <h1>🔄 Landscape Mode Required</h1>
-    <p>Please rotate your device horizontally to view the race track properly.</p>
+    <h1>🔄 Lūdzu pagrieziet ierīci horizontāli</h1>
+    <p>Lai vērotu sacensības, novietojiet telefonu Landscape režīmā.</p>
 </div>
 
 <div id="game-container">
     <div id="canvas-container">
-        <canvas id="raceCanvas" width="460" height="660"></canvas>
+        <canvas id="raceCanvas" width="480" height="650"></canvas>
     </div>
     
     <div id="sidebar" class="hidden">
         <div id="toggle-panel-btn" onclick="toggleSidebar()">⚙️</div>
 
         <div class="panel">
-            <h2>Track Selection</h2>
-            <div class="btn-group">
-                <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">🏎️ 1. Neon Speed Circuit</button>
-                <button class="map-btn" id="map1-btn" onclick="changeMap(1)">⚙️ 2. Kinetic Propeller Gate</button>
-                <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 3. Cosmic Plinko Cascade</button>
-            </div>
+            <h2>Trases Izvēle</h2>
+            <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">🏎️ 1. Ātruma Lielceļš</button>
+            <button class="map-btn" id="map1-btn" onclick="changeMap(1)">⚙️ 2. Rotējošie Propelleri</button>
+            <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 3. Plinko Kaskāde</button>
         </div>
 
         <div class="panel">
-            <h2>Marbles Lineup</h2>
+            <h2>Dalībnieki</h2>
             <div id="editor-rows-container"></div>
-            <button class="secondary-btn" onclick="addMarbleRow()">+ Add Competitor</button>
+            <button class="secondary-btn" onclick="addMarbleRow()">+ Pievienot Bumbiņu</button>
         </div>
 
         <div class="panel">
-            <h2>Leaderboard</h2>
+            <h2>Līderu Tops</h2>
             <div id="leaderboard"></div>
         </div>
         
-        <button style="margin-top: auto; font-size: 16px; padding: 15px; background: linear-gradient(135deg, #ff4757, #ff6b81); box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);" onclick="startRaceBtn()">🚀 LAUNCH RACE</button>
+        <button style="margin-top: auto; font-size: 15px; padding: 12px; background: linear-gradient(135deg, #ff4757, #ff6b81);" onclick="startRaceBtn()">🚀 SĀKT BRAUCIENU</button>
     </div>
 </div>
 
@@ -180,38 +98,38 @@
     const ctx = canvas.getContext('2d');
 
     let audioCtx = null;
-    function playSound(freq, type="sine", duration=0.05, volume=0.06) {
+    function playBounceSound(freq) {
         try {
             if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
-            osc.type = type; osc.frequency.value = freq;
-            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.type = "sine"; osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + duration);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.04);
         } catch(e){}
     }
 
-    const gravity = 0.25;
-    const bounce = 0.35;
-    const friction = 0.992;
-    const trackHeight = 2400; 
+    const gravity = 0.3;
+    const friction = 0.99;
+    const trackHeight = 2500;
     let cameraY = 0;
     let currentMapIndex = 0;
 
     let marbles = [];
-    let staticObstacles = [];
+    let lines = [];
+    let pins = [];
     let spinners = [];
     let speedPads = [];
     let finishedMarbles = [];
     let raceOver = false;
 
     let marblesList = [
-        { name: 'Alpha Red', color: '#ff4757', imgUrl: '' },
-        { name: 'Neon Blue', color: '#00d2d3', imgUrl: '' },
-        { name: 'Cyber Green', color: '#1dd1a1', imgUrl: '' },
-        { name: 'Sun Flash', color: '#ffa502', imgUrl: '' }
+        { name: 'Sarkanais Zibens', color: '#ff4757' },
+        { name: 'Zilais Vilnis', color: '#00d2d3' },
+        { name: 'Zaļais Bio', color: '#1dd1a1' },
+        { name: 'Dzeltenais Torpedo', color: '#ffa502' }
     ];
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
@@ -223,8 +141,7 @@
             container.innerHTML += `
                 <div class="marble-edit-row">
                     <input type="color" class="marble-color-input" id="m-color-${i}" value="${marble.color}" onchange="saveUIData(${i})">
-                    <input type="text" class="marble-name-input" id="m-name-${i}" value="${marble.name}" placeholder="Name" onchange="saveUIData(${i})">
-                    <input type="text" class="marble-img-input" id="m-img-${i}" value="${marble.imgUrl}" placeholder="Image URL" onchange="saveUIData(${i})">
+                    <input type="text" id="m-name-${i}" value="${marble.name}" onchange="saveUIData(${i})">
                     <button class="delete-btn" onclick="deleteMarbleRow(${i})">X</button>
                 </div>
             `;
@@ -235,65 +152,53 @@
         if (!document.getElementById(`m-name-${i}`)) return;
         marblesList[i].name = document.getElementById(`m-name-${i}`).value;
         marblesList[i].color = document.getElementById(`m-color-${i}`).value;
-        marblesList[i].imgUrl = document.getElementById(`m-img-${i}`).value.trim();
     }
 
-    function saveAllUIData() { marblesList.forEach((_, i) => saveUIData(i)); }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        if(window.innerWidth > 900) document.getElementById('sidebar').classList.remove('hidden');
-    });
-
     function addMarbleRow() {
-        saveAllUIData();
-        let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
-        marblesList.push({ name: `Marb ${marblesList.length + 1}`, color: randomColor, imgUrl: '' });
+        marblesList.push({ name: `Bumbiņa ${marblesList.length + 1}`, color: '#ffffff' });
         renderEditorUI();
     }
 
     function deleteMarbleRow(index) {
-        saveAllUIData(); if (marblesList.length <= 1) return;
+        if (marblesList.length <= 1) return;
         marblesList.splice(index, 1); renderEditorUI();
     }
 
-    function generateTrack() {
-        staticObstacles = []; spinners = []; speedPads = [];
+    function buildTrack() {
+        lines = []; pins = []; spinners = []; speedPads = [];
 
-        // Outer entrance and exit funnels
-        staticObstacles.push({ x1: -10, y1: 120, x2: 190, y2: 160 }, { x1: 470, y1: 120, x2: 270, y2: 160 });
-        staticObstacles.push({ x1: -10, y1: 2260, x2: 190, y2: 2310 }, { x1: 470, y1: 2260, x2: 270, y2: 2310 });
+        // Drošības piltuves sākumā un beigās, lai neviens neiestrēgtu stūros
+        lines.push({x1: 0, y1: 100, x2: 200, y2: 150}, {x1: 480, y1: 100, x2: 280, y2: 150});
+        lines.push({x1: 0, y1: 2350, x2: 200, y2: 2400}, {x1: 480, y1: 2350, x2: 280, y2: 2400});
 
         if (currentMapIndex === 0) {
-            // MAP 1: NEON SPEED HIGHWAY
-            for (let y = 260; y < 2100; y += 280) {
-                // Left to right ramp (Slants DOWNwards towards the right wall, stopping early)
-                staticObstacles.push({ x1: 0, y1: y, x2: 370, y2: y + 90 });
-                // FIX: Speed pad is forced to push DOWN the slope (dirX = 1 means towards x2)
-                speedPads.push({ x: 120, y: y + 20, w: 70, h: 10, targetRampIdx: staticObstacles.length - 1, dirX: 1 });
+            // MAP 1: ĀTRUMA LIELCEĻŠ (Pilnībā pārveidoti leņķi stāvidnē, lai garantētu ripošanu)
+            for (let y = 250; y < 2200; y += 260) {
+                // Slīpums pa labi (Gals beidzas labi pirms sienas, lai bumbiņa brīvi nokristu)
+                lines.push({ x1: 0, y1: y, x2: 390, y2: y + 110 });
+                speedPads.push({ x: 120, y: y + 34, w: 60, h: 8, forceX: 4, forceY: 1 });
 
-                // Right to left ramp (Slants DOWNwards towards the left wall)
-                staticObstacles.push({ x1: 460, y1: y + 140, x2: 90, y2: y + 230 });
-                // FIX: Speed pad is forced to push DOWN the slope (dirX = -1 means towards x2)
-                speedPads.push({ x: 250, y: y + 160, w: 70, h: 10, targetRampIdx: staticObstacles.length - 1, dirX: 1 });
+                // Slīpums pa kreisi
+                lines.push({ x1: 480, y1: y + 130, x2: 90, y2: y + 240 });
+                speedPads.push({ x: 300, y: y + 180, w: 60, h: 8, forceX: -4, forceY: 1 });
             }
         } else if (currentMapIndex === 1) {
-            // MAP 2: KINETIC PROPELLER CHAOS
-            for (let y = 280; y < 2100; y += 300) {
-                staticObstacles.push({ x1: 0, y1: y, x2: 150, y2: y + 30 });
-                staticObstacles.push({ x1: 460, y1: y, x2: 310, y2: y + 30 });
-                
-                spinners.push({ x: 230, y: y + 110, size: 48, angle: Math.random()*2, speed: 0.045 });
-                spinners.push({ x: 75, y: y + 210, size: 32, angle: Math.random()*2, speed: -0.06 });
-                spinners.push({ x: 385, y: y + 210, size: 32, angle: Math.random()*2, speed: 0.06 });
+            // MAP 2: PROPELLERI
+            for (let y = 280; y < 2200; y += 300) {
+                lines.push({ x1: 0, y1: y, x2: 160, y2: y + 40 });
+                lines.push({ x1: 480, y1: y, x2: 320, y2: y + 40 });
+                spinners.push({ x: 240, y: y + 120, size: 50, angle: Math.random()*3, speed: 0.05 });
+                spinners.push({ x: 90, y: y + 220, size: 35, angle: Math.random()*3, speed: -0.06 });
+                spinners.push({ x: 390, y: y + 220, size: 35, angle: Math.random()*3, speed: 0.06 });
             }
         } else if (currentMapIndex === 2) {
-            // MAP 3: COSMIC PLINKO CASCADE
-            for (let y = 260; y < 2180; y += 75) {
-                let isEven = (Math.floor(y / 75) % 2 === 0);
-                let count = isEven ? 6 : 5;
-                let startX = isEven ? 52 : 92;
+            // MAP 3: PLINKO
+            for (let y = 250; y < 2250; y += 80) {
+                let rowIdx = Math.floor(y / 80);
+                let count = (rowIdx % 2 === 0) ? 6 : 5;
+                let startX = (rowIdx % 2 === 0) ? 55 : 95;
                 for (let i = 0; i < count; i++) {
-                    staticObstacles.push({ isPin: true, x: startX + i * 71, y: y, r: 7 });
+                    pins.push({ x: startX + i * 74, y: y, r: 8 });
                 }
             }
         }
@@ -301,8 +206,7 @@
 
     function changeMap(index) {
         currentMapIndex = index;
-        for(let i=0; i<3; i++) document.getElementById(`map${i}-btn`).classList.remove('active');
-        document.getElementById(`map${index}-btn`).classList.add('active');
+        document.querySelectorAll('.map-btn').forEach((b, i) => b.classList.toggle('active', i === index));
         startRace();
     }
 
@@ -312,28 +216,23 @@
     }
 
     function startRace() {
-        saveAllUIData(); raceOver = false; cameraY = 0; finishedMarbles = [];
-        generateTrack(); marbles = [];
+        raceOver = false; cameraY = 0; finishedMarbles = [];
+        buildTrack(); marbles = [];
 
         marblesList.forEach((data, i) => {
-            let imgObj = null; if (data.imgUrl !== '') { imgObj = new Image(); imgObj.src = data.imgUrl; }
-            let startX = 130 + (i * (200 / (marblesList.length - 1 || 1)));
+            let startX = 140 + (i * (200 / (marblesList.length - 1 || 1)));
             marbles.push({
-                x: startX, y: 30 - (i * 22),
-                vx: (Math.random() - 0.5) * 1, vy: 1,
-                r: 9.5, color: data.color, name: data.name,
-                img: imgObj, done: false,
-                stuckTimer: 0, trail: []
+                x: startX, y: 30 - (i * 25), vx: (Math.random() - 0.5) * 2, vy: 1, r: 10,
+                color: data.color, name: data.name, done: false, stuckTimer: 0, trail: []
             });
         });
-        playSound(440, "square", 0.1, 0.15);
     }
 
-    function getClosestPointOnLine(px, py, x1, y1, x2, y2) {
-        let abx = x2 - x1; let aby = y2 - y1;
-        let t = ((px - x1) * abx + (py - y1) * aby) / (abx * abx + aby * aby);
+    function getClosestPoint(px, py, x1, y1, x2, y2) {
+        let dx = x2 - x1; let dy = y2 - y1;
+        let t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
         t = Math.max(0, Math.min(1, t));
-        return { x: x1 + t * abx, y: y1 + t * aby };
+        return { x: x1 + t * dx, y: y1 + t * dy };
     }
 
     function update() {
@@ -343,97 +242,80 @@
         marbles.forEach(m => {
             if (m.done) return;
 
-            m.vy += gravity;
-            m.vx *= friction; m.vy *= friction;
+            // Kustības pamati un gravitācija
+            m.vy += gravity; m.vx *= friction; m.vy *= friction;
             m.x += m.vx; m.y += m.vy;
 
+            // Astes efekts
             m.trail.push({x: m.x, y: m.y});
-            if(m.trail.length > 6) m.trail.shift();
+            if (m.trail.length > 5) m.trail.shift();
 
-            // Strict Border Wall Boundaries
-            if (m.x - m.r < 5) { 
-                m.x = m.r + 5; m.vx = Math.abs(m.vx) * bounce; 
-                playSound(260, "sine", 0.01, 0.03); 
-            }
-            if (m.x + m.r > canvas.width - 5) { 
-                m.x = canvas.width - m.r - 5; m.vx = -Math.abs(m.vx) * bounce; 
-                playSound(260, "sine", 0.01, 0.03); 
-            }
+            // Sienu sadursmes (Perfekti nostrādāts atsitienu skripts)
+            if (m.x - m.r < 6) { m.x = m.r + 6; m.vx = Math.abs(m.vx) * 0.4 + 0.5; playBounceSound(280); }
+            if (m.x + m.r > canvas.width - 6) { m.x = canvas.width - m.r - 6; m.vx = -Math.abs(m.vx) * 0.4 - 0.5; playBounceSound(280); }
 
-            // Advanced Line Collision & Slope Sliding Physics
-            staticObstacles.forEach(obs => {
-                if (obs.isPin) {
-                    let dx = m.x - obs.x; let dy = m.y - obs.y; let dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < m.r + obs.r) {
-                        let nx = dx / dist; let ny = dy / dist;
-                        m.x = obs.x + nx * (m.r + obs.r + 0.5); 
-                        let dot = m.vx * nx + m.vy * ny;
-                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 0.6;
-                        m.vy = (m.vy - 2 * dot * ny) * bounce;
-                        playSound(380, "sine", 0.01, 0.04);
-                    }
-                } else {
-                    let closest = getClosestPointOnLine(m.x, m.y, obs.x1, obs.y1, obs.x2, obs.y2);
-                    let dx = m.x - closest.x; let dy = m.y - closest.y; let dist = Math.sqrt(dx*dx + dy*dy);
+            // Līniju/Rampu sadursmju loģika (Pārrakstīta ar izstumšanas garantiju)
+            lines.forEach(line => {
+                let closest = getClosestPoint(m.x, m.y, line.x1, line.y1, line.x2, line.y2);
+                let dx = m.x - closest.x; let dy = m.y - closest.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < m.r) {
+                    let nx = dx / (dist || 1); let ny = dy / (dist || 1);
                     
-                    if (dist < m.r) {
-                        let nx = dx / (dist || 1); let ny = dy / (dist || 1);
-                        
-                        // Push marble out cleanly perpendicular to the line
-                        m.x = closest.x + nx * (m.r + 0.2);
-                        m.y = closest.y + ny * (m.r + 0.2);
+                    // Izstumjam bumbiņu virs līnijas, lai tā neiekristu iekšā
+                    m.x = closest.x + nx * (m.r + 0.1);
+                    m.y = closest.y + ny * (m.r + 0.1);
 
-                        let dot = m.vx * nx + m.vy * ny;
-                        m.vx = (m.vx - 2 * dot * nx) * bounce;
-                        m.vy = (m.vy - 2 * dot * ny) * bounce;
+                    // Atstarošanās vektors
+                    let dot = m.vx * nx + m.vy * ny;
+                    m.vx = (m.vx - 2 * dot * nx) * 0.35;
+                    m.vy = (m.vy - 2 * dot * ny) * 0.35;
 
-                        // Gravity vector projection onto the ramp slope line
-                        let rx = obs.x2 - obs.x1; let ry = obs.y2 - obs.y1;
-                        let rLen = Math.sqrt(rx*rx + ry*ry);
-                        if(rLen > 0) {
-                            let tx = rx / rLen; let ty = ry / rLen;
-                            // Guaranteed acceleration downwards towards (x2, y2)
-                            m.vx += tx * 0.35; m.vy += ty * 0.35; 
-                        }
-                        playSound(200, "sine", 0.01, 0.03);
+                    // Paātrinājums pa slīpumu uz leju (Slide spēks)
+                    let lx = line.x2 - line.x1; let ly = line.y2 - line.y1;
+                    let lLen = Math.sqrt(lx*lx + ly*ly);
+                    if (lLen > 0) {
+                        m.vx += (lx / lLen) * 0.45;
+                        m.vy += (ly / lLen) * 0.45;
                     }
                 }
             });
 
-            // CRITICAL BUGFIX: Smart Acceleration Boosters (Ramp-Relative Alignment)
+            // Plinko tapiņu sadursmes
+            pins.forEach(p => {
+                let dx = m.x - p.x; let dy = m.y - p.y; let dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < m.r + p.r) {
+                    let nx = dx / dist; let ny = dy / dist;
+                    m.x = p.x + nx * (m.r + p.r + 0.2);
+                    let dot = m.vx * nx + m.vy * ny;
+                    m.vx = (m.vx - 2 * dot * nx) * 0.4 + (Math.random() - 0.5) * 0.6;
+                    m.vy = (m.vy - 2 * dot * ny) * 0.4;
+                    playBounceSound(360);
+                }
+            });
+
+            // Ātruma joslu impulss (Nav vienkārša ātruma maiņa, bet fizisks grūdiens uz priekšu)
             speedPads.forEach(pad => {
-                let ramp = staticObstacles[pad.targetRampIdx];
-                if (ramp) {
-                    let closest = getClosestPointOnLine(m.x, m.y, ramp.x1, ramp.y1, ramp.x2, ramp.y2);
-                    let dx = m.x - closest.x; let dy = m.y - closest.y;
-                    let distToRamp = Math.sqrt(dx*dx + dy*dy);
-
-                    // Check if marble is riding inside the booster zone bounding box
-                    if (distToRamp < m.r + 12 && m.x > pad.x && m.x < pad.x + pad.w) {
-                        let rx = ramp.x2 - ramp.x1; let ry = ramp.y2 - ramp.y1;
-                        let rLen = Math.sqrt(rx*rx + ry*ry);
-                        
-                        // Dynamically push the marble DOWN the ramp gradient vector (Never back up!)
-                        m.vx += (rx / rLen) * 0.95 * pad.dirX;
-                        m.vy += (ry / rLen) * 0.95;
-                        playSound(580, "triangle", 0.04, 0.05);
-                    }
+                if (m.x > pad.x && m.x < pad.x + pad.w && Math.abs(m.y - pad.y) < m.r + 6) {
+                    m.vx += pad.forceX * 0.4; m.vy += pad.forceY * 0.4;
+                    playBounceSound(500);
                 }
             });
 
-            // Mechanical Gears & Propellers Physics
+            // Rotējošie šķēršļi
             spinners.forEach(s => {
                 let dx = m.x - s.x; let dy = m.y - s.y; let dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < m.r + s.size) {
                     let nx = dx / dist; let ny = dy / dist;
-                    m.x = s.x + nx * (m.r + s.size + 0.6);
+                    m.x = s.x + nx * (m.r + s.size + 0.5);
                     let tx = -ny * s.speed * s.size; let ty = nx * s.speed * s.size;
-                    m.vx = nx * 1.8 + tx * 1.4; m.vy = ny * 1.5 + ty * 1.4;
-                    playSound(420, "sawtooth", 0.03, 0.04);
+                    m.vx = nx * 2 + tx * 1.2; m.vy = ny * 1.5 + ty * 1.2;
+                    playBounceSound(400);
                 }
             });
 
-            // Marble vs Marble basic body collision distribution
+            // Savstarpējās bumbiņu sadursmes (Izstumšana, lai nesaliptu)
             marbles.forEach(other => {
                 if (m === other || other.done) return;
                 let dx = other.x - m.x; let dy = other.y - m.y; let dist = Math.sqrt(dx*dx + dy*dy);
@@ -441,34 +323,32 @@
                     let overlap = (m.r + other.r) - dist;
                     let nx = dx / (dist || 1); let ny = dy / (dist || 1);
                     m.x -= nx * overlap * 0.5; m.y -= ny * overlap * 0.5;
-                    let tempX = m.vx; m.vx = other.vx * 0.7; other.vx = tempX * 0.7;
+                    let tx = m.vx; m.vx = other.vx * 0.8; other.vx = tx * 0.8;
                 }
             });
 
-            // Dynamic Anti-Stuck Safeguard Grid (Unstuck Trigger)
-            if (Math.abs(m.vx) < 0.2 && Math.abs(m.vy) < 0.25) {
+            // Dzelžains ANTI-STUCK Dzinējs (Ja bumbiņa apstājas, spēle tai iedod mikrotriekienu)
+            if (Math.abs(m.vx) < 0.2 && Math.abs(m.vy) < 0.3) {
                 m.stuckTimer++;
-                if (m.stuckTimer > 18) { // Activated within 0.35s of stalling
-                    // Gives an intentional forward push down the track layout
+                if (m.stuckTimer > 15) { // Ja stāv uz vietas 0.2 sekundes
                     m.vx += (Math.random() > 0.5 ? 2.5 : -2.5);
-                    m.vy += 1.5; 
+                    m.vy += 1;
                     m.stuckTimer = 0;
                 }
             } else { m.stuckTimer = 0; }
 
-            // Finish Line
+            // Finiša sasniegšana
             if (m.y >= trackHeight - 40) {
                 m.done = true; m.vx = 0; m.vy = 0; finishedMarbles.push(m);
-                playSound(520 + (finishedMarbles.length * 60), "sine", 0.2, 0.08); 
                 if (finishedMarbles.length === marbles.length) raceOver = true;
             }
             if (m.y > leadingY && !m.done) leadingY = m.y;
         });
 
-        // Camera Tracking
+        // Kameru sekošana līderim
         if (!raceOver && leadingY > canvas.height / 2) {
             let targetY = leadingY - canvas.height / 2;
-            cameraY += (targetY - cameraY) * 0.15;
+            cameraY += (targetY - cameraY) * 0.12;
             if (cameraY > trackHeight - canvas.height) cameraY = trackHeight - canvas.height;
         }
 
@@ -482,10 +362,10 @@
     function updateLeaderboardUI(sortedMarbles) {
         const board = document.getElementById('leaderboard'); board.innerHTML = '';
         sortedMarbles.forEach((m, idx) => {
-            let statusText = m.done ? `🏁 FINISH (${finishedMarbles.indexOf(m)+1}.)` : `${Math.round(m.y / 20)}m`;
+            let txt = m.done ? `🏁 FINIŠS (${finishedMarbles.indexOf(m)+1}.)` : `${Math.round(m.y / 20)}m`;
             board.innerHTML += `
                 <div class="leader-item" style="background: linear-gradient(90deg, ${m.color}25, transparent); border-left: 4px solid ${m.color}">
-                    <span>${idx + 1}. ${m.name}</span><span>${statusText}</span>
+                    <span>${idx + 1}. ${m.name}</span><span>${txt}</span>
                 </div>
             `;
         });
@@ -495,78 +375,59 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save(); ctx.translate(0, -cameraY);
 
-        let themeColor = currentMapIndex === 0 ? '#00d2d3' : (currentMapIndex === 1 ? '#ff9f43' : '#a29bfe');
-        
-        // Render Embedded Boosters (Arrows adapt to the ramp's flow direction)
+        let mapTheme = currentMapIndex === 0 ? '#00d2d3' : (currentMapIndex === 1 ? '#ff9f43' : '#a29bfe');
+
+        // Ātruma sloksnes (SpeedPads)
         speedPads.forEach(pad => {
-            let ramp = staticObstacles[pad.targetRampIdx];
-            if(ramp) {
-                ctx.save();
-                ctx.shadowBlur = 10; ctx.shadowColor = '#ff4757';
-                ctx.fillStyle = '#ff4757'; ctx.fillRect(pad.x, pad.y, pad.w, pad.h);
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Arial';
-                // Automatically points in the downwards slope vector
-                let arrowText = (ramp.x2 > ramp.x1) ? ">>>" : "<<<";
-                ctx.fillText(arrowText, pad.x + 14, pad.y + 8);
-                ctx.restore();
-            }
+            ctx.fillStyle = '#ff4757'; ctx.fillRect(pad.x, pad.y, pad.w, pad.h);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Arial';
+            ctx.fillText(pad.forceX > 0 ? ">>>" : "<<<", pad.x + 15, pad.y + 8);
         });
 
-        // Neon Slopes & Static Lines
-        ctx.save();
-        ctx.shadowBlur = 6; ctx.shadowColor = themeColor;
-        ctx.strokeStyle = themeColor; ctx.lineWidth = 6; ctx.lineCap = 'round';
-        staticObstacles.forEach(obs => {
-            if (obs.isPin) {
-                ctx.beginPath(); ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI*2);
-                ctx.fillStyle = '#ff9f43'; ctx.fill();
-            } else {
-                ctx.beginPath(); ctx.moveTo(obs.x1, obs.y1); ctx.lineTo(obs.x2, obs.y2); ctx.stroke();
-            }
-        });
-        ctx.restore();
+        // Trases līnijas
+        ctx.strokeStyle = mapTheme; ctx.lineWidth = 6; ctx.lineCap = 'round';
+        lines.forEach(l => { ctx.beginPath(); ctx.moveTo(l.x1, l.y1); ctx.lineTo(l.x2, l.y2); ctx.stroke(); });
 
-        // Spinners
+        // Tapiņas (Pins)
+        pins.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fillStyle = '#ff9f43'; ctx.fill(); });
+
+        // Propelleri
         spinners.forEach(s => {
-            ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle);
-            ctx.shadowBlur = 8; ctx.shadowColor = '#00d2d3';
-            ctx.fillStyle = '#00d2d3'; ctx.fillRect(-s.size, -3, s.size*2, 6); ctx.fillRect(-3, -s.size, 6, s.size*2);
-            ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+            ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle); ctx.fillStyle = '#00d2d3';
+            ctx.fillRect(-s.size, -3, s.size*2, 6); ctx.fillRect(-3, -s.size, 6, s.size*2);
+            ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
         });
 
-        // Goal Checkered Zone
+        // Finiša līnija
         ctx.fillStyle = '#10ac84'; ctx.fillRect(0, trackHeight - 40, canvas.width, 40);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
-        ctx.fillText("⚡ NEON FINISH ZONE ⚡", canvas.width / 2, trackHeight - 15);
+        ctx.fillText("🏁 FINIŠA ZONA 🏁", canvas.width / 2, trackHeight - 15);
 
-        // Render Spheres with Dynamic Radial Shades & Custom Trails
+        // Bumbiņu renderēšana ar 3D ēnojumu un gaismu
         marbles.forEach(m => {
             m.trail.forEach((p, idx) => {
                 ctx.beginPath(); ctx.arc(p.x, p.y, m.r * (idx / m.trail.length), 0, Math.PI*2);
-                ctx.fillStyle = m.color + "18"; ctx.fill();
+                ctx.fillStyle = m.color + "22"; ctx.fill();
             });
 
             ctx.save(); ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.clip();
-            if (m.img && m.img.complete && m.img.naturalWidth !== 0) {
-                ctx.drawImage(m.img, m.x - m.r, m.y - m.r, m.r * 2, m.r * 2);
-            } else {
-                let gradient = ctx.createRadialGradient(m.x - 3, m.y - 3, 1, m.x, m.y, m.r);
-                gradient.addColorStop(0, '#ffffff'); gradient.addColorStop(0.3, m.color); gradient.addColorStop(1, '#000000');
-                ctx.fillStyle = gradient; ctx.fill();
-            }
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.restore();
+            let gradient = ctx.createRadialGradient(m.x - 3, m.y - 3, 1, m.x, m.y, m.r);
+            gradient.addColorStop(0, '#ffffff'); gradient.addColorStop(0.3, m.color); gradient.addColorStop(1, '#000000');
+            ctx.fillStyle = gradient; ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
         });
+
         ctx.restore();
 
-        // Podiums
+        // Rezultātu paziņojums loga beigās
         if (raceOver) {
-            ctx.fillStyle = 'rgba(2, 2, 4, 0.96)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(2, 2, 4, 0.95)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
-            ctx.fillText("GRAND PRIX STANDINGS", canvas.width / 2, 160);
+            ctx.fillText("APBALVOŠANA", canvas.width / 2, 160);
             finishedMarbles.forEach((m, idx) => {
                 if (idx > 4) return; ctx.font = 'bold 18px Arial'; ctx.fillStyle = m.color;
                 let trophy = idx===0 ? "🥇" : (idx===1 ? "🥈" : (idx===2 ? "🥉" : "🏁"));
-                ctx.fillText(`${trophy} Place ${idx + 1}: ${m.name}`, canvas.width / 2, 230 + idx * 42);
+                ctx.fillText(`${trophy} ${idx + 1}. Vieta: ${m.name}`, canvas.width / 2, 230 + idx * 42);
             });
         }
     }

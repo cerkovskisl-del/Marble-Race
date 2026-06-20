@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ultimate Marble Race Grand Prix</title>
+    <title>Ultimate Marble Neon Grand Prix</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,7 +12,7 @@
         }
         body {
             margin: 0; padding: 0;
-            background: #09090e; color: white;
+            background: #050508; color: white;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             display: flex; align-items: center; justify-content: center;
             width: 100vw; height: 100vh; overflow: hidden;
@@ -22,7 +22,7 @@
             position: relative;
             display: flex;
             width: 100%; height: 100%;
-            background: #111116;
+            background: #09090d;
             overflow: hidden;
         }
 
@@ -30,24 +30,25 @@
             flex: 1;
             display: flex; align-items: center; justify-content: center;
             height: 100%; width: 100%;
+            padding: 10px;
         }
         canvas {
-            background: #040407;
-            border: 3px solid #2f2f45;
+            background: #020204;
+            border: 3px solid #1f1f30;
             border-radius: 16px;
             max-height: 100%; max-width: 100%;
             object-fit: contain;
-            box-shadow: 0 0 35px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
         }
 
+        /* Sidebar UI */
         #sidebar {
             width: 350px; height: 100%;
-            background: #0e0e14;
-            border-left: 2px solid #222232;
+            background: #0a0a0f;
+            border-left: 2px solid #1a1a26;
             display: flex; flex-direction: column;
-            gap: 10px; padding: 15px;
+            gap: 12px; padding: 20px;
             overflow-y: auto;
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 100;
         }
 
@@ -66,62 +67,67 @@
         }
 
         .panel {
-            background: #050508;
-            padding: 12px; border-radius: 12px;
-            border: 1px solid #1a1a26;
+            background: #030305;
+            padding: 14px; border-radius: 12px;
+            border: 1px solid #14141f;
         }
-        h2 { margin-top: 0; font-size: 13px; color: #00d2d3; text-align: center; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;}
+        h2 { margin-top: 0; font-size: 12px; color: #00d2d3; text-align: center; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1.5px;}
         
         #editor-rows-container {
-            max-height: 160px; overflow-y: auto; margin-bottom: 8px;
+            max-height: 180px; overflow-y: auto; margin-bottom: 8px;
         }
         .marble-edit-row {
-            display: flex; gap: 5px; margin-bottom: 6px; align-items: center;
-            background: #12121a; padding: 6px; border-radius: 8px; border: 1px solid #222232;
+            display: flex; gap: 6px; margin-bottom: 6px; align-items: center;
+            background: #0d0d14; padding: 6px; border-radius: 8px; border: 1px solid #1f1f30;
         }
         .marble-edit-row input[type="text"] {
-            background: #1c1c27; border: 1px solid #2f2f45; color: white;
-            padding: 6px; border-radius: 6px; font-size: 13px;
+            background: #14141f; border: 1px solid #252538; color: white;
+            padding: 6px; border-radius: 6px; font-size: 13px; outline: none;
         }
-        .marble-name-input { width: 85px; }
+        .marble-name-input { width: 90px; }
         .marble-img-input { flex-grow: 1; }
-        .marble-color-input { width: 35px; height: 30px; border: none; cursor: pointer; background: none; padding: 0; }
+        .marble-color-input { width: 32px; height: 28px; border: none; cursor: pointer; background: none; padding: 0; }
         
         .delete-btn {
             background: #ff4757; padding: 6px 10px; font-size: 12px;
             border-radius: 6px; font-weight: bold; border: none; color: white; cursor: pointer;
         }
+        .delete-btn:hover { background: #ff6b81; }
 
-        #leaderboard { max-height: 120px; overflow-y: auto; }
+        #leaderboard { max-height: 140px; overflow-y: auto; }
         .leader-item {
-            display: flex; justify-content: space-between; margin: 4px 0;
-            padding: 6px; border-radius: 6px; font-weight: bold; font-size: 13px;
+            display: flex; justify-content: space-between; margin: 5px 0;
+            padding: 8px; border-radius: 8px; font-weight: bold; font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         button {
             padding: 12px; font-size: 14px; font-weight: bold;
             background: #10ac84; color: white; border: none; border-radius: 8px;
-            cursor: pointer; transition: background 0.2s;
+            cursor: pointer; transition: all 0.2s;
         }
-        button:hover { background: #1dd1a1; }
+        button:hover { background: #1dd1a1; transform: translateY(-1px); }
         
-        .secondary-btn { background: #1c1c27; border: 1px solid #2f2f45; width: 100%; margin-bottom: 2px; }
-        .secondary-btn:hover { background: #2f2f45; }
+        .secondary-btn { background: #14141f; border: 1px solid #252538; width: 100%; margin-bottom: 2px; }
+        .secondary-btn:hover { background: #1f1f30; }
 
         .map-btn {
-            background: #12121a; border: 1px solid #222232; margin-bottom: 5px;
-            width: 100%; text-align: left; padding: 10px 12px; font-size: 13px; border-radius: 8px; color: #a4b0be;
+            background: #0d0d14; border: 1px solid #1f1f30; margin-bottom: 6px;
+            width: 100%; text-align: left; padding: 11px 14px; font-size: 13px; border-radius: 8px; color: #a4b0be;
         }
-        .map-btn.active { background: #341f97; border-color: #5f27cd; color: #00d2d3; }
+        .map-btn.active {
+            background: #341f97; border-color: #5f27cd; color: #00d2d3;
+            box-shadow: 0 0 10px rgba(95, 39, 205, 0.5);
+        }
 
         #portrait-warning {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #050508; z-index: 9999; flex-direction: column;
+            background: #020204; z-index: 9999; flex-direction: column;
             align-items: center; justify-content: center; text-align: center; padding: 20px;
         }
 
         @media (max-width: 900px) and (orientation: landscape) {
-            #sidebar { position: absolute; right: 0; top: 0; background: rgba(14, 14, 20, 0.95); backdrop-filter: blur(8px); }
+            #sidebar { position: absolute; right: 0; top: 0; background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(10px); }
             #sidebar.hidden { transform: translateX(100%); }
             #toggle-panel-btn { display: flex; }
         }
@@ -134,8 +140,8 @@
 <body>
 
 <div id="portrait-warning">
-    <h1>🔄 Rotate your device!</h1>
-    <p>Please rotate your phone horizontally (Landscape mode) to watch the race.</p>
+    <h1>🔄 Landscape Mode Required</h1>
+    <p>Please rotate your device horizontally to view the race track properly.</p>
 </div>
 
 <div id="game-container">
@@ -149,24 +155,24 @@
         <div class="panel">
             <h2>Track Selection</h2>
             <div class="btn-group">
-                <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">🏎️ 1. Neon Speed Highway</button>
-                <button class="map-btn" id="map1-btn" onclick="changeMap(1)">⚙️ 2. Propeller Chaos</button>
-                <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 3. Plinko Cascade</button>
+                <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">🏎️ 1. Neon Speed Circuit</button>
+                <button class="map-btn" id="map1-btn" onclick="changeMap(1)">⚙️ 2. Kinetic Propeller Gate</button>
+                <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 3. Cosmic Plinko Cascade</button>
             </div>
         </div>
 
         <div class="panel">
-            <h2>Team Lineup</h2>
+            <h2>Marbles Lineup</h2>
             <div id="editor-rows-container"></div>
-            <button class="secondary-btn" onclick="addMarbleRow()">+ Add Participant</button>
+            <button class="secondary-btn" onclick="addMarbleRow()">+ Add Competitor</button>
         </div>
 
         <div class="panel">
-            <h2>Live Leaderboard</h2>
+            <h2>Leaderboard</h2>
             <div id="leaderboard"></div>
         </div>
         
-        <button style="margin-top: auto; font-size: 16px; padding: 14px; background: linear-gradient(135deg, #ff4757, #ff6b81);" onclick="startRaceBtn()">🚀 START RACE</button>
+        <button style="margin-top: auto; font-size: 16px; padding: 15px; background: linear-gradient(135deg, #ff4757, #ff6b81); box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);" onclick="startRaceBtn()">🚀 LAUNCH RACE</button>
     </div>
 </div>
 
@@ -174,8 +180,9 @@
     const canvas = document.getElementById('raceCanvas');
     const ctx = canvas.getContext('2d');
 
+    // Retro Sound Synth
     let audioCtx = null;
-    function playSound(freq, type="sine", duration=0.06, volume=0.08) {
+    function playSound(freq, type="sine", duration=0.05, volume=0.06) {
         try {
             if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             let osc = audioCtx.createOscillator();
@@ -188,8 +195,9 @@
         } catch(e){}
     }
 
-    const gravity = 0.22;
-    const bounce = 0.4;
+    const gravity = 0.25;
+    const bounce = 0.35;
+    const friction = 0.99;
     const trackHeight = 2400; 
     let cameraY = 0;
     let currentMapIndex = 0;
@@ -202,10 +210,10 @@
     let raceOver = false;
 
     let marblesList = [
-        { name: 'Red Fast', color: '#ff4757', imgUrl: '' },
-        { name: 'Blue Wave', color: '#1e90ff', imgUrl: '' },
-        { name: 'Green Bio', color: '#2ed573', imgUrl: '' },
-        { name: 'Gold Flash', color: '#ffa502', imgUrl: '' }
+        { name: 'Alpha Red', color: '#ff4757', imgUrl: '' },
+        { name: 'Neon Blue', color: '#00d2d3', imgUrl: '' },
+        { name: 'Cyber Green', color: '#1dd1a1', imgUrl: '' },
+        { name: 'Sun Flash', color: '#ffa502', imgUrl: '' }
     ];
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
@@ -241,7 +249,7 @@
     function addMarbleRow() {
         saveAllUIData();
         let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
-        marblesList.push({ name: `Marble ${marblesList.length + 1}`, color: randomColor, imgUrl: '' });
+        marblesList.push({ name: `Marb ${marblesList.length + 1}`, color: randomColor, imgUrl: '' });
         renderEditorUI();
     }
 
@@ -250,41 +258,43 @@
         marblesList.splice(index, 1); renderEditorUI();
     }
 
+    // MAP MAKER WITH PRECISE DESIGN PATTERNS
     function generateTrack() {
         staticObstacles = []; spinners = []; speedPads = [];
 
-        // Main upper and lower funnels to guide marbles safely
-        staticObstacles.push({ x1: 0, y1: 100, x2: 180, y2: 150 }, { x1: 460, y1: 100, x2: 280, y2: 150 });
-        staticObstacles.push({ x1: 0, y1: 2260, x2: 180, y2: 2320 }, { x1: 460, y1: 2260, x2: 280, y2: 2320 });
+        // Safety funnels at entry and exit gates
+        staticObstacles.push({ x1: -10, y1: 120, x2: 190, y2: 160 }, { x1: 470, y1: 120, x2: 270, y2: 160 });
+        staticObstacles.push({ x1: -10, y1: 2260, x2: 190, y2: 2310 }, { x1: 470, y1: 2260, x2: 270, y2: 2310 });
 
         if (currentMapIndex === 0) {
-            // MAP 1: FIXED SPEED HIGHWAY (Optimized slopes & safe margins)
-            for (let y = 250; y < 2100; y += 300) {
-                // Left-to-right ramp (stopping 60px before right wall to prevent sticking)
-                staticObstacles.push({ x1: 0, y1: y, x2: 380, y2: y + 95 });
-                speedPads.push({ x: 120, y: y + 10, w: 60, h: 10, vx: 5, vy: 1.2 });
+            // MAP 1: NEON SPEED HIGHWAY (Safe open slopes with integrated boosters)
+            for (let y = 260; y < 2100; y += 280) {
+                // Left to right ramp (Stops early to guarantee huge gap at the wall)
+                staticObstacles.push({ x1: 0, y1: y, x2: 370, y2: y + 80 });
+                speedPads.push({ x: 140, y: y + 25, w: 70, h: 10, targetRampIdx: staticObstacles.length - 1, dirX: 1 });
 
-                // Right-to-left ramp (stopping 60px after left wall)
-                staticObstacles.push({ x1: 460, y1: y + 150, x2: 80, y2: y + 245 });
-                speedPads.push({ x: 260, y: y + 160, w: 60, h: 10, vx: -5, vy: 1.2 });
+                // Right to left ramp
+                staticObstacles.push({ x1: 460, y1: y + 140, x2: 90, y2: y + 220 });
+                speedPads.push({ x: 250, y: y + 165, w: 70, h: 10, targetRampIdx: staticObstacles.length - 1, dirX: -1 });
             }
         } else if (currentMapIndex === 1) {
-            // MAP 2: PROPELLER CHAOS
-            for (let y = 280; y < 2100; y += 280) {
-                staticObstacles.push({ x1: 0, y1: y, x2: 160, y2: y + 40 });
-                staticObstacles.push({ x1: 460, y1: y, x2: 300, y2: y + 40 });
-                spinners.push({ x: 230, y: y + 120, size: 45, angle: Math.random(), speed: 0.05 });
-                spinners.push({ x: 80, y: y + 210, size: 30, angle: Math.random(), speed: -0.06 });
-                spinners.push({ x: 380, y: y + 210, size: 30, angle: Math.random(), speed: 0.06 });
+            // MAP 2: KINETIC PROPELLER CHAOS
+            for (let y = 280; y < 2100; y += 300) {
+                staticObstacles.push({ x1: 0, y1: y, x2: 150, y2: y + 30 });
+                staticObstacles.push({ x1: 460, y1: y, x2: 310, y2: y + 30 });
+                
+                spinners.push({ x: 230, y: y + 110, size: 48, angle: Math.random()*2, speed: 0.045 });
+                spinners.push({ x: 75, y: y + 210, size: 32, angle: Math.random()*2, speed: -0.06 });
+                spinners.push({ x: 385, y: y + 210, size: 32, angle: Math.random()*2, speed: 0.06 });
             }
         } else if (currentMapIndex === 2) {
-            // MAP 3: PLINKO CASCADE
-            for (let y = 250; y < 2150; y += 75) {
+            // MAP 3: COSMIC PLINKO CASCADE
+            for (let y = 260; y < 2180; y += 75) {
                 let isEven = (Math.floor(y / 75) % 2 === 0);
                 let count = isEven ? 6 : 5;
-                let startX = isEven ? 50 : 90;
+                let startX = isEven ? 52 : 92;
                 for (let i = 0; i < count; i++) {
-                    staticObstacles.push({ isPin: true, x: startX + i * 72, y: y, r: 7 });
+                    staticObstacles.push({ isPin: true, x: startX + i * 71, y: y, r: 7 });
                 }
             }
         }
@@ -308,23 +318,22 @@
 
         marblesList.forEach((data, i) => {
             let imgObj = null; if (data.imgUrl !== '') { imgObj = new Image(); imgObj.src = data.imgUrl; }
-            let startX = 120 + (i * (220 / (marblesList.length - 1 || 1)));
+            let startX = 130 + (i * (200 / (marblesList.length - 1 || 1)));
             marbles.push({
-                x: startX, y: 30 - (i * 24),
-                vx: (Math.random() - 0.5) * 1.5, vy: 1,
-                r: 10, color: data.color, name: data.name,
+                x: startX, y: 30 - (i * 22),
+                vx: (Math.random() - 0.5) * 1, vy: 1,
+                r: 9.5, color: data.color, name: data.name,
                 img: imgObj, done: false,
                 stuckTimer: 0, trail: []
             });
         });
-        playSound(440, "square", 0.12, 0.15);
+        playSound(440, "square", 0.1, 0.15);
     }
 
     function getClosestPointOnLine(px, py, x1, y1, x2, y2) {
         let abx = x2 - x1; let aby = y2 - y1;
-        let t = (px - x1) * abx + (py - y1) * aby;
-        let lenSq = abx * abx + aby * aby;
-        t = Math.max(0, Math.min(1, t / lenSq));
+        let t = ((px - x1) * abx + (py - y1) * aby) / (abx * abx + aby * aby);
+        t = Math.max(0, Math.min(1, t));
         return { x: x1 + t * abx, y: y1 + t * aby };
     }
 
@@ -335,33 +344,36 @@
         marbles.forEach(m => {
             if (m.done) return;
 
+            // Apply Basic Physics Laws
             m.vy += gravity;
+            m.vx *= friction; m.vy *= friction;
             m.x += m.vx; m.y += m.vy;
 
+            // Trail rendering management
             m.trail.push({x: m.x, y: m.y});
             if(m.trail.length > 6) m.trail.shift();
 
-            // BUGFIX 1: Safe boundary wall handling + corner anti-stick push out
-            if (m.x - m.r < 4) { 
-                m.x = m.r + 4; m.vx = Math.abs(m.vx) * bounce + 0.5; 
-                playSound(280, "sine", 0.02, 0.04); 
+            // BUGFIX 1: Hard Wall Boundaries (No visual clipping)
+            if (m.x - m.r < 5) { 
+                m.x = m.r + 5; m.vx = Math.abs(m.vx) * bounce; 
+                playSound(260, "sine", 0.01, 0.03); 
             }
-            if (m.x + m.r > canvas.width - 4) { 
-                m.x = canvas.width - m.r - 4; m.vx = -Math.abs(m.vx) * bounce - 0.5; 
-                playSound(280, "sine", 0.02, 0.04); 
+            if (m.x + m.r > canvas.width - 5) { 
+                m.x = canvas.width - m.r - 5; m.vx = -Math.abs(m.vx) * bounce; 
+                playSound(260, "sine", 0.01, 0.03); 
             }
 
-            // BUGFIX 2: Perfect Ramp Physics & Sliding acceleration Vector
+            // BUGFIX 2: Advanced Vector Ramp Reflection & Rolling Force Engine
             staticObstacles.forEach(obs => {
                 if (obs.isPin) {
                     let dx = m.x - obs.x; let dy = m.y - obs.y; let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r + obs.r) {
                         let nx = dx / dist; let ny = dy / dist;
-                        m.x = obs.x + nx * (m.r + obs.r + 0.5);
+                        m.x = obs.x + nx * (m.r + obs.r + 0.5); // Push out safety boundary
                         let dot = m.vx * nx + m.vy * ny;
-                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 0.8;
+                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 0.6;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
-                        playSound(350, "sine", 0.02, 0.04);
+                        playSound(380, "sine", 0.01, 0.04);
                     }
                 } else {
                     let closest = getClosestPointOnLine(m.x, m.y, obs.x1, obs.y1, obs.x2, obs.y2);
@@ -370,48 +382,59 @@
                     if (dist < m.r) {
                         let nx = dx / (dist || 1); let ny = dy / (dist || 1);
                         
-                        // Force push out above the slope line
-                        if (ny < 0) {
-                            m.x = closest.x + nx * (m.r + 0.2);
-                            m.y = closest.y + ny * (m.r + 0.2);
-                        }
+                        // Enforce bobby-guard position only if hitting line from top side
+                        m.x = closest.x + nx * (m.r + 0.2);
+                        m.y = closest.y + ny * (m.r + 0.2);
 
                         let dot = m.vx * nx + m.vy * ny;
                         m.vx = (m.vx - 2 * dot * nx) * bounce;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
 
-                        // Slide vector calculation to accelerate smoothly down slopes
+                        // Slide Engine: Create downstream directional acceleration vector
                         let rx = obs.x2 - obs.x1; let ry = obs.y2 - obs.y1;
                         let rLen = Math.sqrt(rx*rx + ry*ry);
                         if(rLen > 0) {
                             let tx = rx / rLen; let ty = ry / rLen;
-                            m.vx += tx * 0.28; m.vy += ty * 0.28; // Natural gravity acceleration vector
+                            // Add velocity alongside the vector angle of the line down
+                            m.vx += tx * 0.32; m.vy += ty * 0.32; 
                         }
-                        playSound(220, "sine", 0.02, 0.03);
+                        playSound(200, "sine", 0.01, 0.03);
                     }
                 }
             });
 
-            // BUGFIX 3: Repositioned speed pads (Guaranteed overlay triggers)
+            // BUGFIX 3: Safe Embedded Overlay Speed Booster Pads
             speedPads.forEach(pad => {
-                if(m.x > pad.x && m.x < pad.x + pad.w && m.y > pad.y - m.r && m.y < pad.y + pad.h + m.r) {
-                    m.vx += pad.vx * 0.2;
-                    m.vy += pad.vy * 0.2;
-                    playSound(600, "triangle", 0.04, 0.06);
+                let ramp = staticObstacles[pad.targetRampIdx];
+                if (ramp) {
+                    let closest = getClosestPointOnLine(m.x, m.y, ramp.x1, ramp.y1, ramp.x2, ramp.y2);
+                    let dx = m.x - closest.x; let dy = m.y - closest.y;
+                    let distToRamp = Math.sqrt(dx*dx + dy*dy);
+
+                    // Check if marble is riding near the pad's horizontal span
+                    if (distToRamp < m.r + 12 && m.x > pad.x && m.x < pad.x + pad.w) {
+                        let rx = ramp.x2 - ramp.x1; let ry = ramp.y2 - ramp.y1;
+                        let rLen = Math.sqrt(rx*rx + ry*ry);
+                        m.vx += (rx / rLen) * 0.65 * pad.dirX;
+                        m.vy += (ry / rLen) * 0.65;
+                        playSound(580, "triangle", 0.05, 0.05);
+                    }
                 }
             });
 
+            // Rotators & Kinetic Gears Collision
             spinners.forEach(s => {
                 let dx = m.x - s.x; let dy = m.y - s.y; let dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < m.r + s.size) {
                     let nx = dx / dist; let ny = dy / dist;
-                    m.x = s.x + nx * (m.r + s.size + 0.5);
+                    m.x = s.x + nx * (m.r + s.size + 0.6);
                     let tx = -ny * s.speed * s.size; let ty = nx * s.speed * s.size;
-                    m.vx = nx * 2.2 + tx * 1.3; m.vy = ny * 1.8 + ty * 1.3;
-                    playSound(400, "sawtooth", 0.04, 0.05);
+                    m.vx = nx * 1.8 + tx * 1.4; m.vy = ny * 1.5 + ty * 1.4;
+                    playSound(420, "sawtooth", 0.03, 0.04);
                 }
             });
 
+            // Marble vs Marble standard elastic impacts
             marbles.forEach(other => {
                 if (m === other || other.done) return;
                 let dx = other.x - m.x; let dy = other.y - m.y; let dist = Math.sqrt(dx*dx + dy*dy);
@@ -419,33 +442,33 @@
                     let overlap = (m.r + other.r) - dist;
                     let nx = dx / (dist || 1); let ny = dy / (dist || 1);
                     m.x -= nx * overlap * 0.5; m.y -= ny * overlap * 0.5;
-                    let tempX = m.vx; m.vx = other.vx * 0.75; other.vx = tempX * 0.75;
+                    let tempX = m.vx; m.vx = other.vx * 0.7; other.vx = tempX * 0.7;
                 }
             });
 
-            // Ultra anti-stuck grid algorithm
-            if (Math.abs(m.vx) < 0.15 && Math.abs(m.vy) < 0.25) {
+            // Ultimate Anti-Stuck Fail Safe Grid
+            if (Math.abs(m.vx) < 0.15 && Math.abs(m.vy) < 0.2) {
                 m.stuckTimer++;
-                if (m.stuckTimer > 25) { 
-                    m.vx += (Math.random() > 0.5 ? 1.8 : -1.8);
-                    m.vy -= 1.2;
+                if (m.stuckTimer > 20) { // If stagnant for roughly ~0.4s
+                    m.vx += (Math.random() > 0.5 ? 2.2 : -2.2);
+                    m.vy -= 1.0; 
                     m.stuckTimer = 0;
                 }
-            } else {
-                m.stuckTimer = 0;
-            }
+            } else { m.stuckTimer = 0; }
 
+            // Finish Gate
             if (m.y >= trackHeight - 40) {
                 m.done = true; m.vx = 0; m.vy = 0; finishedMarbles.push(m);
-                playSound(520 + (finishedMarbles.length * 60), "sine", 0.2, 0.1); 
+                playSound(520 + (finishedMarbles.length * 60), "sine", 0.2, 0.08); 
                 if (finishedMarbles.length === marbles.length) raceOver = true;
             }
             if (m.y > leadingY && !m.done) leadingY = m.y;
         });
 
+        // Smooth Linear Interpolation Camera Movement
         if (!raceOver && leadingY > canvas.height / 2) {
             let targetY = leadingY - canvas.height / 2;
-            cameraY += (targetY - cameraY) * 0.12;
+            cameraY += (targetY - cameraY) * 0.15;
             if (cameraY > trackHeight - canvas.height) cameraY = trackHeight - canvas.height;
         }
 
@@ -461,7 +484,7 @@
         sortedMarbles.forEach((m, idx) => {
             let statusText = m.done ? `🏁 FINISH (${finishedMarbles.indexOf(m)+1}.)` : `${Math.round(m.y / 20)}m`;
             board.innerHTML += `
-                <div class="leader-item" style="background: linear-gradient(90deg, ${m.color}30, transparent); border-left: 5px solid ${m.color}">
+                <div class="leader-item" style="background: linear-gradient(90deg, ${m.color}25, transparent); border-left: 4px solid ${m.color}">
                     <span>${idx + 1}. ${m.name}</span><span>${statusText}</span>
                 </div>
             `;
@@ -472,40 +495,50 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save(); ctx.translate(0, -cameraY);
 
-        let mapThemeColor = currentMapIndex === 0 ? '#00d2d3' : (currentMapIndex === 1 ? '#ff9f43' : '#a29bfe');
+        let themeColor = currentMapIndex === 0 ? '#00d2d3' : (currentMapIndex === 1 ? '#ff9f43' : '#a29bfe');
         
-        // Speed Booster pads (Rendered beautifully over tracks)
+        // Render Embedded Speed Boost Neon Highlights
         speedPads.forEach(pad => {
+            ctx.save();
+            ctx.shadowBlur = 10; ctx.shadowColor = '#ff4757';
             ctx.fillStyle = '#ff4757'; ctx.fillRect(pad.x, pad.y, pad.w, pad.h);
             ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Arial';
-            ctx.fillText(pad.vx > 0 ? ">>>" : "<<<", pad.x + 12, pad.y + 8);
+            ctx.fillText(pad.dirX > 0 ? ">>>" : "<<<", pad.x + 14, pad.y + 8);
+            ctx.restore();
         });
 
-        // Fixed Physics Lines & Rails
-        ctx.strokeStyle = mapThemeColor; ctx.lineWidth = 6; ctx.lineCap = 'round';
+        // Rails & Obstacles with Neon Bloom Effect
+        ctx.save();
+        ctx.shadowBlur = 6; ctx.shadowColor = themeColor;
+        ctx.strokeStyle = themeColor; ctx.lineWidth = 6; ctx.lineCap = 'round';
         staticObstacles.forEach(obs => {
             if (obs.isPin) {
                 ctx.beginPath(); ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI*2);
-                ctx.fillStyle = '#f1c40f'; ctx.fill();
+                ctx.fillStyle = '#ff9f43'; ctx.fill();
             } else {
                 ctx.beginPath(); ctx.moveTo(obs.x1, obs.y1); ctx.lineTo(obs.x2, obs.y2); ctx.stroke();
             }
         });
+        ctx.restore();
 
+        // Kinetic Propellers/Spinners
         spinners.forEach(s => {
-            ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle); ctx.fillStyle = '#00d2d3';
-            ctx.fillRect(-s.size, -4, s.size*2, 8); ctx.fillRect(-4, -s.size, 8, s.size*2);
-            ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+            ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle);
+            ctx.shadowBlur = 8; ctx.shadowColor = '#00d2d3';
+            ctx.fillStyle = '#00d2d3'; ctx.fillRect(-s.size, -3, s.size*2, 6); ctx.fillRect(-3, -s.size, 6, s.size*2);
+            ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
         });
 
+        // Finish Gate UI
         ctx.fillStyle = '#10ac84'; ctx.fillRect(0, trackHeight - 40, canvas.width, 40);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
-        ctx.fillText("⚡ FINISH LINE ⚡", canvas.width / 2, trackHeight - 15);
+        ctx.fillText("⚡ NEON FINISH ZONE ⚡", canvas.width / 2, trackHeight - 15);
 
+        // Marbles Spheres + 3D Radial Highlighting
         marbles.forEach(m => {
             m.trail.forEach((p, idx) => {
                 ctx.beginPath(); ctx.arc(p.x, p.y, m.r * (idx / m.trail.length), 0, Math.PI*2);
-                ctx.fillStyle = m.color + "22"; ctx.fill();
+                ctx.fillStyle = m.color + "18"; ctx.fill();
             });
 
             ctx.save(); ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.clip();
@@ -516,18 +549,19 @@
                 gradient.addColorStop(0, '#ffffff'); gradient.addColorStop(0.3, m.color); gradient.addColorStop(1, '#000000');
                 ctx.fillStyle = gradient; ctx.fill();
             }
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.restore();
         });
         ctx.restore();
 
+        // Grand Prix Podium Announcement Layer
         if (raceOver) {
-            ctx.fillStyle = 'rgba(4, 4, 7, 0.95)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(2, 2, 4, 0.96)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
             ctx.fillText("GRAND PRIX STANDINGS", canvas.width / 2, 160);
             finishedMarbles.forEach((m, idx) => {
                 if (idx > 4) return; ctx.font = 'bold 18px Arial'; ctx.fillStyle = m.color;
                 let trophy = idx===0 ? "🥇" : (idx===1 ? "🥈" : (idx===2 ? "🥉" : "🏁"));
-                ctx.fillText(`${trophy} Place ${idx + 1}: ${m.name}`, canvas.width / 2, 230 + idx * 40);
+                ctx.fillText(`${trophy} Place ${idx + 1}: ${m.name}`, canvas.width / 2, 230 + idx * 42);
             });
         }
     }

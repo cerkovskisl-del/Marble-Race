@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Extreme Accelerating & Unpredictable Marble Race</title>
+    <title>Ultimate Unpredictable Marble Race</title>
     <style>
         * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
         body {
-            margin: 0; padding: 0; background: #070a13; color: #f8fafc;
+            margin: 0; padding: 0; background: #05070f; color: #f8fafc;
             font-family: system-ui, -apple-system, sans-serif; font-weight: bold;
             display: flex; align-items: center; justify-content: center;
             width: 100vw; height: 100vh; overflow: hidden;
         }
-        #game-container { position: relative; display: flex; width: 100%; height: 100%; background: #070a13; }
+        #game-container { position: relative; display: flex; width: 100%; height: 100%; background: #05070f; }
         #canvas-container { flex: 1; display: flex; align-items: center; justify-content: center; height: 100%; padding: 10px; }
         canvas {
-            background: #0b0f19; border: 3px solid #1e293b; border-radius: 12px;
+            background: #090d16; border: 3px solid #1e293b; border-radius: 16px;
             max-height: 100%; max-width: 100%; object-fit: contain;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
         }
         #sidebar {
             width: 340px; height: 100%; background: #0f172a; border-left: 2px solid #1e293b;
@@ -77,10 +77,10 @@
         <div id="toggle-panel-btn" onclick="toggleSidebar()">⚙️</div>
 
         <div class="panel">
-            <h2>TRASAS VEIDS</h2>
-            <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">⚡ 1. Haotiskie Slīpumi</button>
-            <button class="map-btn" id="map1-btn" onclick="changeMap(1)">🎯 2. Mega Elektrosfēras</button>
-            <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 3. Kosmiskais Plinko</button>
+            <h2>TRASAS REŽĪMS</h2>
+            <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">🎲 Dinamiskie Slīpumi (Procedurāli)</button>
+            <button class="map-btn" id="map1-btn" onclick="changeMap(1)">🎯 Bamperi & Nitro Slazdi</button>
+            <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 Mega Plinko Haoss</button>
         </div>
 
         <div class="panel">
@@ -94,7 +94,7 @@
             <div id="leaderboard"></div>
         </div>
         
-        <button style="margin-top: auto; font-size: 15px; padding: 12px; background: #ef4444;" onclick="startRaceBtn()">🏁 SĀKT JAUNU SACĪKSTI</button>
+        <button style="margin-top: auto; font-size: 15px; padding: 12px; background: #ef4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);" onclick="startRaceBtn()">🏁 SĀKT JAUNU SACĪKSTI</button>
     </div>
 </div>
 
@@ -103,8 +103,8 @@
     const ctx = canvas.getContext('2d');
 
     const baseGravity = 0.52; 
-    const friction = 1.0; // Nav pretestības, bumbiņas tikai uzņem gaitu
-    const bounce = 0.65;   
+    const friction = 1.0; 
+    const bounce = 0.6;   
     const trackHeight = 2500;
     let cameraY = 0;
     let currentMapIndex = 0;
@@ -113,6 +113,7 @@
     let lines = [];
     let pins = [];
     let bumpers = [];
+    let speedPads = []; // Jaunas nitro/paātrinājuma joslas
     let finishedMarbles = [];
     let raceOver = false;
 
@@ -137,9 +138,9 @@
                         <button class="delete-btn" onclick="deleteMarbleRow(${i})">X</button>
                     </div>
                     <div style="display:flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                        <label class="file-upload-label" for="file-${i}">📁 Ielādēt bildi</label>
+                        <label class="file-upload-label" for="file-${i}">📁 Bilde</label>
                         <input type="file" id="file-${i}" accept="image/*" style="display:none;" onchange="handleFileSelect(event, ${i})">
-                        <span style="font-size:10px; color:#64748b;" id="status-${i}">${marble.imgData ? '✓ Ielādēts' : 'Nav bildes'}</span>
+                        <span style="font-size:10px; color:#64748b;" id="status-${i}">${marble.imgData ? '✓ Gatavs' : 'Nav bildes'}</span>
                     </div>
                 </div>
             `;
@@ -155,7 +156,7 @@
                 img.src = e.target.result;
                 img.onload = function() {
                     marblesList[i].imgData = img;
-                    document.getElementById(`status-${i}`).innerText = '✓ Ielādēts';
+                    document.getElementById(`status-${i}`).innerText = '✓ Gatavs';
                 }
             };
             reader.readAsDataURL(file);
@@ -178,33 +179,48 @@
         marblesList.splice(index, 1); renderEditorUI();
     }
 
+    // JAUNUMS: Katru reizi pilnīgi nejauša trases ģenerēšana labākam atkalspēlēšanas priekam
     function buildTrack() {
-        lines = []; pins = []; bumpers = [];
+        lines = []; pins = []; bumpers = []; speedPads = [];
         
-        // Stāvas barjeras sākumā/beigās
         lines.push({x1: 0, y1: 110, x2: 200, y2: 170}, {x1: 480, y1: 110, x2: 280, y2: 170});
-        lines.push({x1: 0, y1: 2360, x2: 200, y2: 2420}, {x1: 480, y1: 2360, x2: 280, y2: 2420});
+        lines.push({x1: 0, y1: 2380, x2: 200, y2: 2430}, {x1: 480, y1: 2380, x2: 280, y2: 2430});
 
         if (currentMapIndex === 0) {
+            // PROCEDURĀLIE SLĪPUMI (Katru reizi citi izmēri un spraugas)
             for (let y = 260; y < 2200; y += 230) {
-                lines.push({ x1: 0, y1: y, x2: 340, y2: y + 140 });
-                lines.push({ x1: 480, y1: y + 110, x2: 140, y2: y + 250 });
+                let offset1 = (Math.random() - 0.5) * 40;
+                let offset2 = (Math.random() - 0.5) * 40;
+                lines.push({ x1: 0, y1: y, x2: 320 + offset1, y2: y + 130 });
+                lines.push({ x1: 480, y1: y + 110, x2: 160 + offset2, y2: y + 240 });
+                
+                // Retumis ieliekam kādu nitro joslu uz nogāzēm
+                if(Math.random() > 0.6) {
+                    speedPads.push({x: 80 + Math.random()*300, y: y + 60, r: 18});
+                }
             }
         } else if (currentMapIndex === 1) {
-            for (let y = 280; y < 2200; y += 280) {
-                lines.push({ x1: 0, y1: y, x2: 120, y2: y + 50 });
-                lines.push({ x1: 480, y1: y, x2: 360, y2: y + 50 });
-                bumpers.push({ x: 240, y: y + 110, r: 24 });
-                bumpers.push({ x: 135, y: y + 195, r: 16 });
-                bumpers.push({ x: 345, y: y + 195, r: 16 });
+            // BAMPERI UN NITRO SLAZDI
+            for (let y = 280; y < 2200; y += 260) {
+                lines.push({ x1: 0, y1: y, x2: 130, y2: y + 40 });
+                lines.push({ x1: 480, y1: y, x2: 350, y2: y + 40 });
+                
+                bumpers.push({ x: 240 + (Math.random() - 0.5)*50, y: y + 100, r: 25 });
+                speedPads.push({ x: 120 + Math.random()*240, y: y + 190, r: 20 });
             }
         } else if (currentMapIndex === 2) {
+            // HAOTISKAIS PLINKO
             for (let y = 240; y < 2250; y += 90) {
                 let rowIdx = Math.floor(y / 90);
                 let count = (rowIdx % 2 === 0) ? 6 : 5;
                 let startX = (rowIdx % 2 === 0) ? 55 : 95;
                 for (let i = 0; i < count; i++) {
-                    pins.push({ x: startX + i * 74, y: y, r: 5 });
+                    // Pievienojam nelielu nobīdi katrai tapiņai, lai ceļš nav vienāds
+                    let randX = (Math.random() - 0.5) * 12;
+                    pins.push({ x: startX + i * 74 + randX, y: y, r: 5 });
+                }
+                if (Math.random() > 0.75) {
+                    bumpers.push({ x: 80 + Math.random()*320, y: y + 40, r: 16 });
                 }
             }
         }
@@ -226,10 +242,10 @@
         buildTrack(); marbles = [];
 
         marblesList.forEach((data, i) => {
-            // Nedaudz nejauša starta pozīcija katru reizi
-            let startX = 150 + (i * (180 / (marblesList.length - 1 || 1))) + (Math.random() - 0.5) * 15;
+            // Pilnīgi haotisks starta novietojums neparedzamībai
+            let startX = 140 + (i * (200 / (marblesList.length - 1 || 1))) + (Math.random() - 0.5) * 25;
             marbles.push({
-                x: startX, y: 30 - (i * 26), vx: (Math.random() - 0.5) * 4, vy: 3, r: 11,
+                x: startX, y: 30 - (i * 26), vx: (Math.random() - 0.5) * 5, vy: 3, r: 11,
                 color: data.color, name: data.name, img: data.imgData, done: false, stuckTimer: 0,
                 speedMultiplier: 1.0 
             });
@@ -249,24 +265,18 @@
         marbles.forEach(m => {
             if (m.done) return;
 
-            // UZLABOJUMS: Katru kadru bumbiņas reizinātājs palielinās ātrāk un agresīvāk
-            m.speedMultiplier += 0.0022; 
+            // EKSPONENCIĀLS TURBO PAĀTRINĀJUMS (Aug katru sekundi uz leju)
+            m.speedMultiplier += 0.0024; 
             let dynamicGravity = baseGravity * m.speedMultiplier;
 
             m.vy += dynamicGravity; 
             m.x += m.vx; m.y += m.vy;
 
-            // Sienas un atsitiena nejaušība (Katrs atsitiens maina trajektoriju)
-            if (m.x - m.r < 10) { 
-                m.x = m.r + 10; 
-                m.vx = Math.abs(m.vx) * bounce * m.speedMultiplier + Math.random(); 
-            }
-            if (m.x + m.r > canvas.width - 10) { 
-                m.x = canvas.width - m.r - 10; 
-                m.vx = -Math.abs(m.vx) * bounce * m.speedMultiplier - Math.random(); 
-            }
+            // Atkušana pret sienām ar haosa piešvici
+            if (m.x - m.r < 10) { m.x = m.r + 10; m.vx = Math.abs(m.vx) * bounce * m.speedMultiplier + Math.random(); }
+            if (m.x + m.r > canvas.width - 10) { m.x = canvas.width - m.r - 10; m.vx = -Math.abs(m.vx) * bounce * m.speedMultiplier - Math.random(); }
 
-            // Rampas un slīpumi
+            // Rampas
             lines.forEach(line => {
                 let closest = getClosestPoint(m.x, m.y, line.x1, line.y1, line.x2, line.y2);
                 let dx = m.x - closest.x; let dy = m.y - closest.y;
@@ -274,48 +284,53 @@
 
                 if (dist < m.r) {
                     let nx = dx / (dist || 1); let ny = dy / (dist || 1);
-                    m.x = closest.x + nx * (m.r + 0.1);
-                    m.y = closest.y + ny * (m.r + 0.1);
+                    m.x = closest.x + nx * (m.r + 0.1); m.y = closest.y + ny * (m.r + 0.1);
 
                     let dot = m.vx * nx + m.vy * ny;
-                    m.vx = (m.vx - 2 * dot * nx) * 0.3;
-                    m.vy = (m.vy - 2 * dot * ny) * 0.3;
+                    m.vx = (m.vx - 2 * dot * nx) * 0.25;
+                    m.vy = (m.vy - 2 * dot * ny) * 0.25;
 
                     let lx = line.x2 - line.x1; let ly = line.y2 - line.y1;
                     let lLen = Math.sqrt(lx*lx + ly*ly);
                     if (lLen > 0) {
-                        // Papildus neparedzamība brauciena laikā (+ Math.random)
-                        m.vx += (lx / lLen) * 1.25 * m.speedMultiplier + (Math.random() - 0.5) * 0.5;
-                        m.vy += (ly / lLen) * 1.25 * m.speedMultiplier;
+                        m.vx += (lx / lLen) * 1.35 * m.speedMultiplier + (Math.random() - 0.5);
+                        m.vy += (ly / lLen) * 1.35 * m.speedMultiplier;
                     }
                 }
             });
 
-            // Plinko tapiņas ar paaugstinātu haosu
+            // Tapiņas
             pins.forEach(p => {
                 let dx = m.x - p.x; let dy = m.y - p.y; let dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < m.r + p.r) {
                     let nx = dx / dist; let ny = dy / dist;
                     m.x = p.x + nx * (m.r + p.r + 0.1);
                     let dot = m.vx * nx + m.vy * ny;
-                    // Palielināts nejaušības koeficients atsitienā pret tapiņām
-                    m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 1.8;
+                    m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 2.2;
                     m.vy = (m.vy - 2 * dot * ny) * bounce;
                 }
             });
 
-            // Trieciena bamperi
+            // Bamperi
             bumpers.forEach(b => {
                 let dx = m.x - b.x; let dy = m.y - b.y; let dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < m.r + b.r) {
                     let nx = dx / dist; let ny = dy / dist;
                     m.x = b.x + nx * (m.r + b.r + 0.2);
-                    m.vx = nx * 10 * m.speedMultiplier + (Math.random() - 0.5) * 2; 
-                    m.vy = ny * 10 * m.speedMultiplier;
+                    m.vx = nx * 11 * m.speedMultiplier; m.vy = ny * 11 * m.speedMultiplier;
                 }
             });
 
-            // "ZRIP" LOĢIKA (Bumbiņas slīd viena otrai cauri, bet ietekmē viena otras gaitu ar haosu)
+            // NITRO JOSLAS (Uzkāpjot virsū, dod mega paātrinājumu uz leju)
+            speedPads.forEach(sp => {
+                let dx = m.x - sp.x; let dy = m.y - sp.y; let dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < m.r + sp.r) {
+                    m.vy += 4.5 * m.speedMultiplier; // Nitro grūdiens uz priekšu
+                    m.vx += (Math.random() - 0.5) * 3;
+                }
+            });
+
+            // ZRIPIENS (Izbraukšana cauri ar nelielu fizisku grūdienu vienai pret otru)
             marbles.forEach(other => {
                 if (m === other || other.done) return;
                 let dx = other.x - m.x; let dy = other.y - m.y; let dist = Math.sqrt(dx*dx + dy*dy);
@@ -323,26 +338,24 @@
                     let overlap = (m.r + other.r) - dist;
                     let nx = dx / (dist || 1); let ny = dy / (dist || 1);
                     
-                    m.x -= nx * overlap * 0.08; 
-                    m.y -= ny * overlap * 0.08;
+                    m.x -= nx * overlap * 0.08; m.y -= ny * overlap * 0.08;
                     
                     let tx = m.vx; 
-                    m.vx = other.vx * 0.95 + (Math.random() - 0.5) * 1.2; 
-                    other.vx = tx * 0.95 + (Math.random() - 0.5) * 1.2;
+                    m.vx = other.vx * 0.95 + (Math.random() - 0.5) * 1.5; 
+                    other.vx = tx * 0.95 + (Math.random() - 0.5) * 1.5;
                 }
             });
 
-            // Ātra pret-iesprūšanas sistēma
+            // Pretaizķeršanās sistēma
             if (Math.abs(m.vx) < 0.2 && Math.abs(m.vy) < 0.3) {
                 m.stuckTimer++;
                 if (m.stuckTimer > 3) { 
-                    m.vx += (Math.random() > 0.5 ? 6 : -6);
-                    m.vy += 4;
+                    m.vx += (Math.random() > 0.5 ? 6 : -6); m.vy += 4;
                     m.stuckTimer = 0;
                 }
             } else { m.stuckTimer = 0; }
 
-            // Finiša sasniegšana
+            // Finišēšana
             if (m.y >= trackHeight - 40) {
                 m.done = true; m.vx = 0; m.vy = 0; m.y = trackHeight - 20;
                 finishedMarbles.push(m);
@@ -351,7 +364,6 @@
             if (m.y > leadingY && !m.done) leadingY = m.y;
         });
 
-        // Kameras sekošana līderim
         if (!raceOver && leadingY > canvas.height / 2) {
             let targetY = leadingY - canvas.height / 2;
             cameraY += (targetY - cameraY) * 0.25;
@@ -382,15 +394,19 @@
         ctx.save(); ctx.translate(0, -cameraY);
 
         // Apmales
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(0, 0, 10, trackHeight);
-        ctx.fillRect(canvas.width - 10, 0, 10, trackHeight);
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, 10, trackHeight); ctx.fillRect(canvas.width - 10, 0, 10, trackHeight);
 
-        // Trases līnijas ar vizuālo neon spīdumu
-        ctx.strokeStyle = '#334155'; ctx.lineWidth = 6; ctx.lineCap = 'round';
-        ctx.shadowColor = 'rgba(56, 189, 248, 0.2)'; ctx.shadowBlur = 4;
+        // Neon trases līnijas
+        ctx.strokeStyle = '#2d3748'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+        ctx.shadowColor = 'rgba(56, 189, 248, 0.15)'; ctx.shadowBlur = 4;
         lines.forEach(l => { ctx.beginPath(); ctx.moveTo(l.x1, l.y1); ctx.lineTo(l.x2, l.y2); ctx.stroke(); });
         ctx.shadowBlur = 0; 
+
+        // Nitro/Paātrinājuma joslas (Zaļi mirdzoši apļi)
+        speedPads.forEach(sp => {
+            ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI*2); ctx.fillStyle = 'rgba(16, 185, 129, 0.4)'; ctx.fill();
+            ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r - 6, 0, Math.PI*2); ctx.fillStyle = '#10b981'; ctx.fill();
+        });
 
         // Tapiņas
         pins.forEach(p => {
@@ -400,34 +416,32 @@
         // Bamperi
         bumpers.forEach(b => {
             ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fillStyle = '#ef4444'; ctx.fill();
-            ctx.beginPath(); ctx.arc(b.x, b.y, b.r - 5, 0, Math.PI*2); ctx.fillStyle = '#0b0f19'; ctx.fill();
+            ctx.beginPath(); ctx.arc(b.x, b.y, b.r - 5, 0, Math.PI*2); ctx.fillStyle = '#090d16'; ctx.fill();
         });
 
         // Finiša zona
         ctx.fillStyle = '#10b981'; ctx.fillRect(10, trackHeight - 45, canvas.width - 20, 45);
         ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
-        ctx.fillText("FINIŠA ZONA", canvas.width / 2, trackHeight - 18);
+        ctx.fillText("FINIŠA LĪNIJA", canvas.width / 2, trackHeight - 18);
 
-        // Bumbiņas (Attēli vai tīras krāsas)
+        // Bumbiņas
         marbles.forEach(m => {
             ctx.save(); ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.clip();
-            
             if (m.img) {
                 ctx.drawImage(m.img, m.x - m.r, m.y - m.r, m.r * 2, m.r * 2);
             } else {
                 ctx.fillStyle = m.color; ctx.fill();
             }
-            
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
         });
 
         ctx.restore();
 
-        // Rezultātu logs loga beigās
+        // Rezultātu logs
         if (raceOver) {
-            ctx.fillStyle = 'rgba(7, 10, 19, 0.96)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(5, 7, 15, 0.96)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 22px system-ui'; ctx.textAlign = 'center';
-            ctx.fillText("SACENSĪBU REZULTĀTI", canvas.width / 2, 160);
+            ctx.fillText("FINIŠA REZULTĀTI", canvas.width / 2, 160);
             finishedMarbles.forEach((m, idx) => {
                 if (idx > 4) return; ctx.font = 'bold 15px system-ui'; ctx.fillStyle = m.color;
                 ctx.fillText(`${idx + 1}. VIETA — ${m.name}`, canvas.width / 2, 230 + idx * 40);

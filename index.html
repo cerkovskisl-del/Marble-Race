@@ -40,7 +40,7 @@
             box-shadow: 0 0 35px rgba(0, 0, 0, 0.8);
         }
 
-        /* Responsive Sidebar */
+        /* Sidebar UI */
         #sidebar {
             width: 350px; height: 100%;
             background: #0e0e14;
@@ -52,7 +52,6 @@
             z-index: 100;
         }
 
-        /* Toggle Button (appears on mobile devices only) */
         #toggle-panel-btn {
             display: none;
             position: absolute;
@@ -93,20 +92,17 @@
             background: #ff4757; padding: 6px 10px; font-size: 12px;
             border-radius: 6px; font-weight: bold; border: none; color: white; cursor: pointer;
         }
-        .delete-btn:hover { background: #ff6b81; }
 
         #leaderboard { max-height: 120px; overflow-y: auto; }
         .leader-item {
             display: flex; justify-content: space-between; margin: 4px 0;
             padding: 6px; border-radius: 6px; font-weight: bold; font-size: 13px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
         }
 
         button {
             padding: 12px; font-size: 14px; font-weight: bold;
             background: #10ac84; color: white; border: none; border-radius: 8px;
-            cursor: pointer; transition: background 0.2s, transform 0.1s;
-            -webkit-tap-highlight-color: transparent;
+            cursor: pointer; transition: background 0.2s;
         }
         button:hover { background: #1dd1a1; }
         
@@ -119,7 +115,6 @@
         }
         .map-btn.active {
             background: #341f97; border-color: #5f27cd; color: #00d2d3;
-            box-shadow: 0 0 12px rgba(95, 39, 205, 0.6);
         }
 
         #portrait-warning {
@@ -127,25 +122,12 @@
             background: #050508; z-index: 9999; flex-direction: column;
             align-items: center; justify-content: center; text-align: center; padding: 20px;
         }
-        #portrait-warning h1 { color: #ff4757; font-size: 26px; margin-bottom: 10px; }
-        #portrait-warning p { color: #a4b0be; font-size: 16px; }
 
-        /* Sidebar responsive behaviors for small screens */
         @media (max-width: 900px) and (orientation: landscape) {
-            #sidebar {
-                position: absolute; right: 0; top: 0;
-                background: rgba(14, 14, 20, 0.95);
-                backdrop-filter: blur(8px);
-                box-shadow: -5px 0 20px rgba(0,0,0,0.5);
-            }
-            #sidebar.hidden {
-                transform: translateX(100%);
-            }
-            #toggle-panel-btn {
-                display: flex;
-            }
+            #sidebar { position: absolute; right: 0; top: 0; background: rgba(14, 14, 20, 0.95); backdrop-filter: blur(8px); }
+            #sidebar.hidden { transform: translateX(100%); }
+            #toggle-panel-btn { display: flex; }
         }
-
         @media (orientation: portrait) {
             #portrait-warning { display: flex; }
             #game-container { display: none; }
@@ -156,7 +138,7 @@
 
 <div id="portrait-warning">
     <h1>🔄 Rotate your device!</h1>
-    <p>Please rotate your phone horizontally (Landscape mode) to experience the race in full size.</p>
+    <p>Please rotate your phone horizontally (Landscape mode) to watch the race.</p>
 </div>
 
 <div id="game-container">
@@ -168,11 +150,11 @@
         <div id="toggle-panel-btn" onclick="toggleSidebar()">⚙️</div>
 
         <div class="panel">
-            <h2>Track Attractions</h2>
+            <h2>Track Selection</h2>
             <div class="btn-group">
-                <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">🏎️ 1. Speed & Nitro Highway</button>
-                <button class="map-btn" id="map1-btn" onclick="changeMap(1)">⚙️ 2. Portal & Gear Chaos</button>
-                <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 3. Cascade & Neon Casino</button>
+                <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">🏎️ 1. Neon Speed Highway</button>
+                <button class="map-btn" id="map1-btn" onclick="changeMap(1)">⚙️ 2. Propeller Chaos</button>
+                <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 3. Plinko Cascade</button>
             </div>
         </div>
 
@@ -187,7 +169,7 @@
             <div id="leaderboard"></div>
         </div>
         
-        <button style="margin-top: auto; font-size: 16px; padding: 14px; background: linear-gradient(135deg, #ff4757, #ff6b81); box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);" onclick="startRaceBtn()">🚀 START SIGNAL</button>
+        <button style="margin-top: auto; font-size: 16px; padding: 14px; background: linear-gradient(135deg, #ff4757, #ff6b81);" onclick="startRaceBtn()">🚀 START RACE</button>
     </div>
 </div>
 
@@ -195,9 +177,9 @@
     const canvas = document.getElementById('raceCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Retro 8-bit Audio Synthesizer System
+    // Synth Sound Player
     let audioCtx = null;
-    function playSound(freq, type="sine", duration=0.1, volume=0.12) {
+    function playSound(freq, type="sine", duration=0.08, volume=0.1) {
         try {
             if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             let osc = audioCtx.createOscillator();
@@ -210,9 +192,9 @@
         } catch(e){}
     }
 
-    const gravity = 0.16;
-    const bounce = 0.52;
-    const trackHeight = 2500; 
+    const gravity = 0.18;
+    const bounce = 0.45;
+    const trackHeight = 2400; 
     let cameraY = 0;
     let currentMapIndex = 0;
 
@@ -220,20 +202,17 @@
     let staticObstacles = [];
     let spinners = [];
     let speedPads = [];
-    let portals = [];
     let finishedMarbles = [];
     let raceOver = false;
 
     let marblesList = [
-        { name: 'Red', color: '#ff4757', imgUrl: '' },
-        { name: 'Blue', color: '#1e90ff', imgUrl: '' },
-        { name: 'Green', color: '#2ed573', imgUrl: '' },
-        { name: 'Yellow', color: '#ffa502', imgUrl: '' }
+        { name: 'Red Fast', color: '#ff4757', imgUrl: '' },
+        { name: 'Blue Wave', color: '#1e90ff', imgUrl: '' },
+        { name: 'Green Bio', color: '#2ed573', imgUrl: '' },
+        { name: 'Gold Flash', color: '#ffa502', imgUrl: '' }
     ];
 
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('hidden');
-    }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
 
     function renderEditorUI() {
         const container = document.getElementById('editor-rows-container');
@@ -260,9 +239,7 @@
     function saveAllUIData() { marblesList.forEach((_, i) => saveUIData(i)); }
 
     document.addEventListener("DOMContentLoaded", () => {
-        if(window.innerWidth > 900) {
-            document.getElementById('sidebar').classList.remove('hidden');
-        }
+        if(window.innerWidth > 900) document.getElementById('sidebar').classList.remove('hidden');
     });
 
     function addMarbleRow() {
@@ -277,75 +254,40 @@
         marblesList.splice(index, 1); renderEditorUI();
     }
 
-    // MAP GENERATOR
+    // MAP SETUP (Cleaned layouts to minimize bugs)
     function generateTrack() {
-        staticObstacles = []; spinners = []; speedPads = []; portals = [];
+        staticObstacles = []; spinners = []; speedPads = [];
 
-        // Safety Funnels
-        staticObstacles.push({ x1: 0, y1: 120, x2: 170, y2: 180 }, { x1: 460, y1: 120, x2: 290, y2: 180 });
-        staticObstacles.push({ x1: 0, y1: 2320, x2: 180, y2: 2400 }, { x1: 460, y1: 2320, x2: 280, y2: 2400 });
+        // Outer bounds funnel at start/finish
+        staticObstacles.push({ x1: 0, y1: 100, x2: 160, y2: 150 }, { x1: 460, y1: 100, x2: 300, y2: 150 });
+        staticObstacles.push({ x1: 0, y1: 2250, x2: 160, y2: 2320 }, { x1: 460, y1: 2250, x2: 300, y2: 2320 });
 
         if (currentMapIndex === 0) {
-            // MAP 1: NITRO HIGHWAY
-            staticObstacles.push(
-                { x1: 0, y1: 320, x2: 360, y2: 390 },
-                { x1: 100, y1: 560, x2: 460, y2: 630 },
-                { x1: 0, y1: 850, x2: 300, y2: 920, isTrampoline: true }, // Trampoline launcher
-                { x1: 160, y1: 1080, x2: 460, y2: 1140 },
-                { x1: 0, y1: 1400, x2: 340, y2: 1470 },
-                { x1: 120, y1: 1750, x2: 460, y2: 1820 },
-                { x1: 0, y1: 2050, x2: 360, y2: 2110 }
-            );
-            speedPads.push(
-                { x: 120, y: 335, w: 60, h: 12, vx: 5, vy: 2 },
-                { x: 280, y: 585, w: 60, h: 12, vx: -5, vy: 2 },
-                { x: 260, y: 1100, w: 60, h: 12, vx: -5, vy: 2 },
-                { x: 220, y: 1770, w: 60, h: 12, vx: -6, vy: 2 }
-            );
-            spinners.push(
-                { x: 400, y: 480, size: 28, angle: 0, speed: 0.07 },
-                { x: 60, y: 720, size: 28, angle: 0, speed: -0.07 },
-                { x: 230, y: 1280, size: 38, angle: 1, speed: 0.04 }
-            );
+            // MAP 1: SPEED HIGHWAY (Zig-Zag slopes)
+            for (let y = 250; y < 2100; y += 300) {
+                staticObstacles.push({ x1: 0, y1: y, x2: 340, y2: y + 80 });
+                speedPads.push({ x: 80, y: y + 30, w: 70, h: 12, vx: 4 });
+                
+                staticObstacles.push({ x1: 460, y1: y + 150, x2: 120, y2: y + 230 });
+                speedPads.push({ x: 310, y: y + 180, w: 70, h: 12, vx: -4 });
+            }
         } else if (currentMapIndex === 1) {
-            // MAP 2: PORTAL MADNESS
-            staticObstacles.push(
-                { x1: 0, y1: 400, x2: 150, y2: 430 }, { x1: 310, y1: 400, x2: 460, y2: 430 },
-                { x1: 120, y1: 850, x2: 340, y2: 850 },
-                { x1: 0, y1: 1300, x2: 180, y2: 1340 }, { x1: 280, y1: 1300, x2: 460, y2: 1340 },
-                { x1: 100, y1: 1750, x2: 360, y2: 1750 }
-            );
-            portals.push(
-                { x1: 50, y1: 510, x2: 390, y2: 960, r: 18, color: '#9b5de5' }, 
-                { x1: 410, y1: 510, x2: 70, y2: 960, r: 18, color: '#00f5d4' },  
-                { x1: 230, y1: 1450, x2: 230, y2: 1920, r: 22, color: '#ff007f' } 
-            );
-            let rotators = [
-                {x: 230, y: 300, sz: 55, sp: 0.025}, {x: 90, y: 700, sz: 45, sp: -0.04},
-                {x: 370, y: 700, sz: 45, sp: 0.04}, {x: 230, y: 1100, sz: 60, sp: -0.02},
-                {x: 110, y: 1550, sz: 50, sp: 0.035}, {x: 350, y: 1550, sz: 50, sp: -0.035},
-                {x: 230, y: 2110, sz: 65, sp: 0.015}
-            ];
-            rotators.forEach(p => spinners.push({ x: p.x, y: p.y, size: p.sz, angle: Math.random()*3, speed: p.sp }));
+            // MAP 2: PROPELLER CHAOS
+            for (let y = 280; y < 2100; y += 280) {
+                staticObstacles.push({ x1: 0, y1: y, x2: 180, y2: y + 40 });
+                staticObstacles.push({ x1: 460, y1: y, x2: 280, y2: y + 40 });
+                spinners.push({ x: 230, y: y + 130, size: 45, angle: Math.random(), speed: 0.05 });
+                spinners.push({ x: 70, y: y + 220, size: 30, angle: Math.random(), speed: -0.07 });
+                spinners.push({ x: 390, y: y + 220, size: 30, angle: Math.random(), speed: 0.07 });
+            }
         } else if (currentMapIndex === 2) {
-            // MAP 3: NEON CASINO CASCADES
-            let layers = [380, 750, 1120, 1500, 1880];
-            layers.forEach((y, idx) => {
-                if (idx % 2 === 0) {
-                    staticObstacles.push({ x1: 230, y1: y, x2: 140, y2: y+60 }, { x1: 230, y1: y, x2: 320, y2: y+60 });
-                    staticObstacles.push({ x1: 0, y1: y+140, x2: 90, y2: y+120 }, { x1: 460, y1: y+140, x2: 370, y2: y+120 });
-                } else {
-                    staticObstacles.push({ x1: 110, y1: y, x2: 40, y2: y+50 }, { x1: 110, y1: y, x2: 180, y2: y+50 });
-                    staticObstacles.push({ x1: 350, y1: y, x2: 280, y2: y+50 }, { x1: 350, y1: y, x2: 420, y2: y+50 });
-                    staticObstacles.push({ x1: 170, y1: y+120, x2: 230, y2: y+145 }, { x1: 290, y1: y+120, x2: 230, y2: y+145 });
-                }
-            });
-            // Plinko pegs grid
-            for (let y = 240; y < 2250; y += 75) {
-                let isEven = (Math.floor(y / 75) % 2 === 0);
-                let count = isEven ? 7 : 6; let sx = isEven ? 35 : 68;
+            // MAP 3: PLINKO CASCADE
+            for (let y = 250; y < 2150; y += 70) {
+                let isEven = (Math.floor(y / 70) % 2 === 0);
+                let count = isEven ? 6 : 5;
+                let startX = isEven ? 45 : 85;
                 for (let i = 0; i < count; i++) {
-                    staticObstacles.push({ isPin: true, x: sx + i * 65, y: y + (Math.random()-0.5)*3, r: 6 });
+                    staticObstacles.push({ isPin: true, x: startX + i * 74, y: y, r: 7 });
                 }
             }
         }
@@ -359,9 +301,7 @@
     }
 
     function startRaceBtn() {
-        if (window.innerWidth <= 900) {
-            document.getElementById('sidebar').classList.add('hidden');
-        }
+        if (window.innerWidth <= 900) document.getElementById('sidebar').classList.add('hidden');
         startRace();
     }
 
@@ -371,17 +311,16 @@
 
         marblesList.forEach((data, i) => {
             let imgObj = null; if (data.imgUrl !== '') { imgObj = new Image(); imgObj.src = data.imgUrl; }
-            let startX = 80 + (i * (300 / (marblesList.length - 1 || 1))) + (Math.random() - 0.5) * 12;
+            let startX = 100 + (i * (260 / (marblesList.length - 1 || 1)));
             marbles.push({
-                x: startX, y: 25 - (Math.random()*35),
-                vx: (Math.random() - 0.5) * 2, vy: 0,
+                x: startX, y: 30 - (i * 20),
+                vx: (Math.random() - 0.5) * 2, vy: 1,
                 r: 10, color: data.color, name: data.name,
                 img: imgObj, done: false,
-                trail: [] // Array for motion trail nodes
+                stuckTimer: 0, trail: []
             });
         });
-        playSound(350, "square", 0.15, 0.2); 
-        setTimeout(() => playSound(440, "square", 0.3, 0.2), 150);
+        playSound(400, "square", 0.1, 0.2);
     }
 
     function getClosestPointOnLine(px, py, x1, y1, x2, y2) {
@@ -396,60 +335,67 @@
 
         marbles.forEach(m => {
             if (m.done) return;
-            m.vy += gravity; m.x += m.vx; m.y += m.vy;
 
-            // Tracking the motion trail positions
+            // Apply gravity and movement
+            m.vy += gravity;
+            m.x += m.vx; m.y += m.vy;
+
+            // Trail positions
             m.trail.push({x: m.x, y: m.y});
-            if(m.trail.length > 8) m.trail.shift();
+            if(m.trail.length > 6) m.trail.shift();
 
-            // Wall Collisions
-            if (m.x - m.r < 0) { m.x = m.r; m.vx = -m.vx * (bounce + 0.1); playSound(220, "sine", 0.04); }
-            if (m.x + m.r > canvas.width) { m.x = canvas.width - m.r; m.vx = -m.vx * (bounce + 0.1); playSound(220, "sine", 0.04); }
+            // Strict Border Collisions (Prevents clipping through outer walls)
+            if (m.x - m.r < 0) { m.x = m.r; m.vx = Math.abs(m.vx) * bounce; playSound(300, "sine", 0.02); }
+            if (m.x + m.r > canvas.width) { m.x = canvas.width - m.r; m.vx = -Math.abs(m.vx) * bounce; playSound(300, "sine", 0.02); }
 
-            // Speed pads
+            // Speed pads logic
             speedPads.forEach(pad => {
                 if(m.x > pad.x && m.x < pad.x + pad.w && m.y > pad.y - m.r && m.y < pad.y + pad.h + m.r) {
-                    m.vx += pad.vx * 0.38; m.vy += pad.vy * 0.38;
-                    playSound(660, "sawtooth", 0.08, 0.1);
+                    m.vx += pad.vx * 0.25;
+                    playSound(500, "triangle", 0.05, 0.08);
                 }
             });
 
-            // Portal System
-            portals.forEach(p => {
-                let dx1 = m.x - p.x1; let dy1 = m.y - p.y1;
-                if(Math.sqrt(dx1*dx1 + dy1*dy1) < m.r + p.r) {
-                    m.x = p.x2; m.y = p.y2 + p.r + 6; 
-                    m.vx = (Math.random()-0.5)*4; m.vy = Math.abs(m.vy)*0.5 + 1;
-                    playSound(587.33, "triangle", 0.18, 0.15);
-                }
-            });
-
-            // Obstacles & Plinko Pegs
+            // Obstacle & Plinko Pegs Physics
             staticObstacles.forEach(obs => {
                 if (obs.isPin) {
                     let dx = m.x - obs.x; let dy = m.y - obs.y; let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r + obs.r) {
-                        let nx = dx / dist; let ny = dy / dist; m.x = obs.x + nx * (m.r + obs.r + 0.5);
+                        let nx = dx / dist; let ny = dy / dist;
+                        m.x = obs.x + nx * (m.r + obs.r + 0.5); // Push out immediately
                         let dot = m.vx * nx + m.vy * ny;
-                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 1.4;
+                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5);
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
-                        playSound(380 + Math.random()*250, "sine", 0.03, 0.08);
+                        playSound(350 + Math.random()*200, "sine", 0.02, 0.05);
                     }
                 } else {
                     let closest = getClosestPointOnLine(m.x, m.y, obs.x1, obs.y1, obs.x2, obs.y2);
                     let dx = m.x - closest.x; let dy = m.y - closest.y; let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r) {
-                        let nx = dx / (dist || 1); let ny = dy / (dist || 1); m.x = closest.x + nx * (m.r + 0.8); 
+                        let nx = dx / (dist || 1); let ny = dy / (dist || 1);
+                        m.x = closest.x + nx * (m.r + 0.5); // Push out safely
                         let dot = m.vx * nx + m.vy * ny;
-                        m.vx = (m.vx - 2 * dot * nx) * (obs.isTrampoline ? 0.95 : bounce);
-                        m.vy = (m.vy - 2 * dot * ny) * (obs.isTrampoline ? 0.95 : bounce);
-                        if(obs.isTrampoline) { m.vy -= 5.8; m.vx += 2.5; playSound(600, "square", 0.14, 0.15); } 
-                        else { m.vx += nx * 0.4; playSound(280, "sine", 0.04, 0.1); }
+                        m.vx = (m.vx - 2 * dot * nx) * bounce;
+                        m.vy = (m.vy - 2 * dot * ny) * bounce;
+                        m.vx += nx * 0.2; // Add a tiny roll push down the ramp
+                        playSound(250, "sine", 0.03, 0.06);
                     }
                 }
             });
 
-            // Marble vs Marble pushing physics
+            // Spinners/Gears Physics
+            spinners.forEach(s => {
+                let dx = m.x - s.x; let dy = m.y - s.y; let dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < m.r + s.size) {
+                    let nx = dx / dist; let ny = dy / dist;
+                    m.x = s.x + nx * (m.r + s.size + 1);
+                    let tx = -ny * s.speed * s.size; let ty = nx * s.speed * s.size;
+                    m.vx = nx * 2 + tx * 1.2; m.vy = ny * 2 + ty * 1.2;
+                    playSound(400, "sawtooth", 0.04, 0.05);
+                }
+            });
+
+            // Marble vs Marble pushing
             marbles.forEach(other => {
                 if (m === other || other.done) return;
                 let dx = other.x - m.x; let dy = other.y - m.y; let dist = Math.sqrt(dx*dx + dy*dy);
@@ -457,37 +403,35 @@
                     let overlap = (m.r + other.r) - dist;
                     let nx = dx / (dist || 1); let ny = dy / (dist || 1);
                     m.x -= nx * overlap * 0.5; m.y -= ny * overlap * 0.5;
-                    let tx = m.vx; m.vx = other.vx * 0.8; other.vx = tx * 0.8;
+                    let tempX = m.vx; m.vx = other.vx * 0.8; other.vx = tempX * 0.8;
                 }
             });
 
-            // Spinners & Gears
-            spinners.forEach(s => {
-                let dx = m.x - s.x; let dy = m.y - s.y; let dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < m.r + s.size) {
-                    let nx = dx / dist; let ny = dy / dist; m.x = s.x + nx * (m.r + s.size + 1);
-                    let tx = -ny * s.speed * s.size; let ty = nx * s.speed * s.size;
-                    m.vx = nx * 3.8 + tx * 1.5; m.vy = ny * 3 + ty * 1.5 - 0.5;
-                    playSound(480, "sawtooth", 0.05, 0.1);
+            // Robust Anti-Stuck Check (If speed is close to 0, start timer)
+            if (Math.abs(m.vx) < 0.2 && Math.abs(m.vy) < 0.3) {
+                m.stuckTimer += 1;
+                if (m.stuckTimer > 30) { // Stalled for ~0.5 seconds
+                    m.vx += (Math.random() - 0.5) * 3;
+                    m.vy -= 1; // Little jump up
+                    m.stuckTimer = 0;
                 }
-            });
+            } else {
+                m.stuckTimer = 0;
+            }
 
-            // Advanced Anti-Stuck System
-            if (Math.abs(m.vx) < 0.15 && Math.abs(m.vy) < 0.4) { m.vx += (Math.random() - 0.5) * 2; m.vy += 0.6; }
-
-            // Reaching Finish Gate
-            if (m.y >= trackHeight - 50) {
+            // Finish Line Zone Check
+            if (m.y >= trackHeight - 40) {
                 m.done = true; m.vx = 0; m.vy = 0; finishedMarbles.push(m);
-                playSound(523.25 + (finishedMarbles.length * 80), "sine", 0.3, 0.15); 
+                playSound(500 + (finishedMarbles.length * 60), "sine", 0.2, 0.1); 
                 if (finishedMarbles.length === marbles.length) raceOver = true;
             }
             if (m.y > leadingY && !m.done) leadingY = m.y;
         });
 
-        // Smooth Camera follow
+        // Smooth Camera movement
         if (!raceOver && leadingY > canvas.height / 2) {
             let targetY = leadingY - canvas.height / 2;
-            cameraY += (targetY - cameraY) * 0.08;
+            cameraY += (targetY - cameraY) * 0.1;
             if (cameraY > trackHeight - canvas.height) cameraY = trackHeight - canvas.height;
         }
 
@@ -501,10 +445,10 @@
     function updateLeaderboardUI(sortedMarbles) {
         const board = document.getElementById('leaderboard'); board.innerHTML = '';
         sortedMarbles.forEach((m, idx) => {
-            let str = m.done ? `🏁 FINISH (${finishedMarbles.indexOf(m)+1}.)` : `${Math.round(m.y / 20)}m`;
+            let statusText = m.done ? `🏁 FINISH (${finishedMarbles.indexOf(m)+1}.)` : `${Math.round(m.y / 20)}m`;
             board.innerHTML += `
-                <div class="leader-item" style="background: linear-gradient(90deg, ${m.color}35, transparent); border-left: 5px solid ${m.color}">
-                    <span>${idx + 1}. ${m.name}</span><span>${str}</span>
+                <div class="leader-item" style="background: linear-gradient(90deg, ${m.color}30, transparent); border-left: 5px solid ${m.color}">
+                    <span>${idx + 1}. ${m.name}</span><span>${statusText}</span>
                 </div>
             `;
         });
@@ -514,82 +458,64 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save(); ctx.translate(0, -cameraY);
 
-        let mainColor = currentMapIndex === 0 ? '#00d2d3' : (currentMapIndex === 1 ? '#ff9f43' : '#a29bfe');
+        let mapThemeColor = currentMapIndex === 0 ? '#00d2d3' : (currentMapIndex === 1 ? '#ff9f43' : '#a29bfe');
         
-        // Render Speedpads with Neon Glow
+        // Boost fields
         speedPads.forEach(pad => {
-            ctx.fillStyle = '#00ff00'; ctx.shadowBlur = 12; ctx.shadowColor = '#00ff00';
-            ctx.fillRect(pad.x, pad.y, pad.w, pad.h); ctx.shadowBlur = 0;
+            ctx.fillStyle = '#00ff00'; ctx.fillRect(pad.x, pad.y, pad.w, pad.h);
         });
 
-        // Portals rendering
-        portals.forEach(p => {
-            ctx.shadowBlur = 15; ctx.shadowColor = p.color;
-            ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x1, p.y1, p.r, 0, Math.PI*2); ctx.fill(); // Entrance
-            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(p.x2, p.y2, p.r*0.65, 0, Math.PI*2); ctx.fill(); // Exit
-            ctx.shadowBlur = 0;
-        });
-
-        // Rails & Plinko Pegs
-        ctx.strokeStyle = mainColor; ctx.lineWidth = 5; ctx.lineCap = 'round';
+        // Static Walls and Rails
+        ctx.strokeStyle = mapThemeColor; ctx.lineWidth = 5; ctx.lineCap = 'round';
         staticObstacles.forEach(obs => {
             if (obs.isPin) {
                 ctx.beginPath(); ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI*2);
-                ctx.fillStyle = currentMapIndex === 2 ? '#ff007f' : '#f1c40f'; ctx.fill();
+                ctx.fillStyle = '#f1c40f'; ctx.fill();
             } else {
-                if(obs.isTrampoline) ctx.strokeStyle = '#ff4757';
                 ctx.beginPath(); ctx.moveTo(obs.x1, obs.y1); ctx.lineTo(obs.x2, obs.y2); ctx.stroke();
-                ctx.strokeStyle = mainColor;
             }
         });
 
-        // Gears / Spinning Propellers
+        // Spinning Propellers
         spinners.forEach(s => {
             ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle); ctx.fillStyle = '#ff4757';
             ctx.fillRect(-s.size, -4, s.size*2, 8); ctx.fillRect(-4, -s.size, 8, s.size*2);
-            ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+            ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
         });
 
-        // Finish Gate & Line
+        // Finish Line Graphics
         ctx.fillStyle = '#10ac84'; ctx.fillRect(0, trackHeight - 40, canvas.width, 40);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
-        ctx.fillText("⚡ FINISH ZONE ⚡", canvas.width / 2, trackHeight - 15);
+        ctx.fillText("⚡ FINISH LINE ⚡", canvas.width / 2, trackHeight - 15);
 
-        // MARBLE RENDERING (Motion Trail + 3D Shading Effect)
+        // Marbles with Shading & Trails
         marbles.forEach(m => {
-            // Trail rendering
-            ctx.save();
-            m.trail.forEach((point, idx) => {
-                ctx.beginPath(); ctx.arc(point.x, point.y, m.r * (idx / m.trail.length), 0, Math.PI*2);
-                ctx.fillStyle = m.color + "25"; ctx.fill();
+            m.trail.forEach((p, idx) => {
+                ctx.beginPath(); ctx.arc(p.x, p.y, m.r * (idx / m.trail.length), 0, Math.PI*2);
+                ctx.fillStyle = m.color + "22"; ctx.fill();
             });
-            ctx.restore();
 
-            // Core Marble Spheres
-            ctx.save(); ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.closePath();
+            ctx.save(); ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.clip();
             if (m.img && m.img.complete && m.img.naturalWidth !== 0) {
-                ctx.clip(); ctx.drawImage(m.img, m.x - m.r, m.y - m.r, m.r * 2, m.r * 2);
+                ctx.drawImage(m.img, m.x - m.r, m.y - m.r, m.r * 2, m.r * 2);
             } else {
-                // 3D Glass shading gradient
                 let gradient = ctx.createRadialGradient(m.x - 3, m.y - 3, 1, m.x, m.y, m.r);
-                gradient.addColorStop(0, '#ffffff');
-                gradient.addColorStop(0.2, m.color);
-                gradient.addColorStop(1, '#000000');
+                gradient.addColorStop(0, '#ffffff'); gradient.addColorStop(0.3, m.color); gradient.addColorStop(1, '#000000');
                 ctx.fillStyle = gradient; ctx.fill();
             }
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
         });
         ctx.restore();
 
-        // Podiums / Grand Prix Final Screen
+        // Podiums screen
         if (raceOver) {
-            ctx.fillStyle = 'rgba(4, 4, 7, 0.94)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 26px Arial'; ctx.textAlign = 'center';
-            ctx.fillText("GRAND PRIX STANDINGS", canvas.width / 2, 140);
+            ctx.fillStyle = 'rgba(4, 4, 7, 0.95)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+            ctx.fillText("GRAND PRIX STANDINGS", canvas.width / 2, 160);
             finishedMarbles.forEach((m, idx) => {
                 if (idx > 4) return; ctx.font = 'bold 18px Arial'; ctx.fillStyle = m.color;
                 let trophy = idx===0 ? "🥇" : (idx===1 ? "🥈" : (idx===2 ? "🥉" : "🏁"));
-                ctx.fillText(`${trophy} Place ${idx + 1}: ${m.name}`, canvas.width / 2, 210 + idx * 38);
+                ctx.fillText(`${trophy} Place ${idx + 1}: ${m.name}`, canvas.width / 2, 230 + idx * 40);
             });
         }
     }

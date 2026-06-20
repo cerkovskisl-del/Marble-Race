@@ -94,20 +94,23 @@
     let finishedMarbles = [];
     let raceOver = false;
 
-    // Ģenerē trases šķēršļus
+    // Ģenerē trases šķēršļus - UZLABOTS, lai līnijas neietu līdz pašām sienām
     function generateTrack() {
         staticObstacles = [
-            // Sākuma piltuve
+            // Sākuma piltuve (atstāta sprauga pa vidu)
             { x1: 0, y1: 100, x2: 180, y2: 180 },
             { x1: 450, y1: 100, x2: 270, y2: 180 },
-            // Zig-zag līnijas
-            { x1: 0, y1: 300, x2: 320, y2: 380 },
-            { x1: 450, y1: 500, x2: 130, y2: 580 },
-            { x1: 0, y1: 700, x2: 320, y2: 780 },
-            // Lielie slaidi zemāk
-            { x1: 100, y1: 1100, x2: 450, y2: 1200 },
-            { x1: 0, y1: 1350, x2: 350, y2: 1450 },
-            { x1: 100, y1: 1650, x2: 450, y2: 1750 },
+            
+            // Zig-zag līnijas (beidzas pirms labās malas vai sākas pēc kreisās malas, atstājot spraugu)
+            { x1: 0, y1: 300, x2: 380, y2: 380 },    // Atstāj 70px brīvu labajā malā
+            { x1: 70, y1: 500, x2: 450, y2: 580 },   // Atstāj 70px brīvu kreisajā malā
+            { x1: 0, y1: 700, x2: 380, y2: 780 },    // Atstāj 70px brīvu labajā malā
+            
+            // Lielie slaidi zemāk (arī saīsināti, lai bumbiņas neiesprūst pie sienas)
+            { x1: 100, y1: 1100, x2: 390, y2: 1180 }, // Atstāj spraugu labajā malā
+            { x1: 60, y1: 1350, x2: 350, y2: 1430 },  // Atstāj spraugu kreisajā malā
+            { x1: 100, y1: 1650, x2: 390, y2: 1730 }, // Atstāj spraugu labajā malā
+            
             // Finiša piltuve
             { x1: 0, y1: 1950, x2: 180, y2: 2050 },
             { x1: 450, y1: 1950, x2: 270, y2: 2050 }
@@ -154,7 +157,6 @@
     }
 
     function update() {
-        // Rotē šķēršļus
         spinners.forEach(s => s.angle += s.speed);
 
         let leadingY = 0;
@@ -165,7 +167,7 @@
             m.vy += gravity;
             m.x += m.vx; m.y += m.vy;
 
-            // Sienu sadursmes (Palielināts bounce, lai labāk atlec)
+            // Sienu sadursmes
             if (m.x - m.r < 0) { 
                 m.x = m.r; 
                 m.vx = -m.vx * (bounce + 0.1); 
@@ -182,10 +184,8 @@
                     let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r + obs.r) {
                         let nx = dx / dist; let ny = dy / dist;
-                        m.x = obs.x + nx * (m.r + obs.r + 1); // Pārvieto nedaudz tālāk, lai neiestrūktu
+                        m.x = obs.x + nx * (m.r + obs.r + 1);
                         let dot = m.vx * nx + m.vy * ny;
-                        
-                        // Piešķir spēcīgāku un nejaušāku atsitienu
                         m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 1.5;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
                     }
@@ -195,37 +195,34 @@
                     let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r) {
                         let nx = dx / dist; let ny = dy / dist;
-                        m.x = closest.x + nx * (m.r + 1); // Novērš iegrimšanu līnijā
+                        m.x = closest.x + nx * (m.r + 1.5); // Nedaudz vairāk pastumj prom no līnijas
                         let dot = m.vx * nx + m.vy * ny;
                         
                         m.vx = (m.vx - 2 * dot * nx) * bounce;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
                         
-                        // Papildu impulss uz sāniem, lai bumbiņa uzreiz noslīdētu no slīpnes
-                        m.vx += nx * 0.5 + (Math.random() - 0.5) * 0.5;
+                        // Piešķir dabisku slīdēšanu uz leju pa slīpumu
+                        m.vx += nx * 0.6 + (Math.random() - 0.5) * 0.4;
                     }
                 }
             });
 
-            // Sadursmes ar rotējošajiem šķēršļiem (Padarītas agresīvākas)
+            // Sadursmes ar rotējošajiem šķēršļiem
             spinners.forEach(s => {
                 let dx = m.x - s.x; let dy = m.y - s.y;
                 let dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < m.r + s.size) {
                     let nx = dx / dist; let ny = dy / dist;
                     m.x = s.x + nx * (m.r + s.size + 2);
-                    
-                    // Rotējošais šķērslis bumbiņu burtiski "aizsviež" prom
                     m.vx = nx * 6 + (Math.random() - 0.5) * 2;
                     m.vy = ny * 4 - 2;
                 }
             });
 
-            // GUMIJAS GLĀBŠANAS JOSLA (Anti-Stuck): 
-            // Ja bumbiņa gandrīz nekustas, iedodam tai grūdienu uz leju vai sāniem
-            if (Math.abs(m.vx) < 0.2 && Math.abs(m.vy) < 0.5) {
-                m.vx += (Math.random() - 0.5) * 1.5;
-                m.vy += 0.5;
+            // Anti-Stuck drošības sistēma pret jebkādu iesprūšanu stūros
+            if (Math.abs(m.vx) < 0.25 && Math.abs(m.vy) < 0.5) {
+                m.vx += (Math.random() - 0.5) * 2; // Iedod spēcīgāku grūdienu uz sāniem
+                m.vy += 0.6;
             }
 
             // Finiša sasniegšana
@@ -239,14 +236,13 @@
             if (m.y > leadingY && !m.done) leadingY = m.y;
         });
 
-        // Kameru sekošana līderim
+        // Kameru sekošana
         if (!raceOver && leadingY > canvas.height / 2) {
             let targetCameraY = leadingY - canvas.height / 2;
             cameraY += (targetCameraY - cameraY) * 0.1;
             if (cameraY > trackHeight - canvas.height) cameraY = trackHeight - canvas.height;
         }
 
-        // Sakārto bumbiņas pēc pozīcijas
         let sorted = [...marbles].sort((a, b) => {
             if (a.done && b.done) return finishedMarbles.indexOf(a) - finishedMarbles.indexOf(b);
             if (a.done) return -1;
@@ -275,7 +271,7 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         ctx.save();
-        ctx.translate(0, -cameraY); // Nobīda visu zīmējumu atbilstoši kamerai
+        ctx.translate(0, -cameraY);
 
         // Zīmē statiskās līnijas un tapas
         ctx.strokeStyle = '#706fd3';
@@ -301,7 +297,6 @@
             ctx.translate(s.x, s.y);
             ctx.rotate(s.angle);
             ctx.fillStyle = '#ff5252';
-            // Zīmē krusta formu
             ctx.fillRect(-s.size, -4, s.size*2, 8);
             ctx.fillRect(-4, -s.size, 8, s.size*2);
             ctx.beginPath();
@@ -311,7 +306,7 @@
             ctx.restore();
         });
 
-        // Zīmē Finiša zonu
+        // Zīmē Finišu
         ctx.fillStyle = '#10ac84';
         ctx.fillRect(0, trackHeight - 40, canvas.width, 40);
         ctx.fillStyle = '#fff';
@@ -330,9 +325,8 @@
             ctx.stroke();
         });
 
-        ctx.restore(); // Atgriež kameru sākumpozīcijā priekš statiskā teksta
+        ctx.restore();
 
-        // Ja spēle beigusies, parāda pjedestālu uz ekrāna
         if (raceOver) {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);

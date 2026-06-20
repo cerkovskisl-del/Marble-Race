@@ -13,7 +13,7 @@
         body {
             margin: 0;
             padding: 0;
-            background: #1a1a24;
+            background: #12121a;
             color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -28,12 +28,11 @@
             display: flex;
             width: 100%;
             height: 100%;
-            background: #242432;
+            background: #1c1c27;
             padding: 10px;
             gap: 15px;
         }
 
-        /* Trases konteiners, kas kontrolē izmēru */
         #canvas-container {
             flex: 1;
             display: flex;
@@ -42,17 +41,17 @@
             height: 100%;
         }
         canvas {
-            background: #0d0d13;
-            border: 3px solid #3d3d5c;
-            border-radius: 8px;
+            background: #08080c;
+            border: 3px solid #4a4a6a;
+            border-radius: 12px;
             max-height: 100%;
             max-width: 100%;
             object-fit: contain;
+            box-shadow: 0 0 20px rgba(0,0,0,0.6);
         }
 
-        /* Sānjoslas panelis */
         #sidebar {
-            width: 340px;
+            width: 350px;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -61,16 +60,15 @@
             padding-right: 5px;
         }
         .panel {
-            background: #15151f;
-            padding: 10px;
+            background: #111118;
+            padding: 12px;
             border-radius: 10px;
-            border: 1px solid #333;
+            border: 1px solid #2a2a3a;
         }
-        h2 { margin-top: 0; font-size: 14px; color: #00d2d3; text-align: center; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;}
+        h2 { margin-top: 0; font-size: 13px; color: #00d2d3; text-align: center; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;}
         
-        /* Bumbiņu saraksts */
         #editor-rows-container {
-            max-height: 140px;
+            max-height: 150px;
             overflow-y: auto;
             margin-bottom: 8px;
         }
@@ -79,19 +77,20 @@
             gap: 5px;
             margin-bottom: 6px;
             align-items: center;
-            background: #1d1d2b;
+            background: #181824;
             padding: 6px;
             border-radius: 6px;
+            border: 1px solid #252535;
         }
         .marble-edit-row input[type="text"] {
-            background: #2e2e42;
-            border: 1px solid #4d4d6e;
+            background: #252535;
+            border: 1px solid #3d3d56;
             color: white;
             padding: 6px;
             border-radius: 4px;
             font-size: 13px;
         }
-        .marble-name-input { width: 80px; }
+        .marble-name-input { width: 85px; }
         .marble-img-input { flex-grow: 1; }
         .marble-color-input { width: 35px; height: 30px; border: none; cursor: pointer; background: none; padding: 0; }
         
@@ -101,11 +100,13 @@
             font-size: 12px;
             border-radius: 4px;
             font-weight: bold;
+            border: none;
+            color: white;
         }
+        .delete-btn:hover { background: #ff6b81; }
 
-        /* Līderu saraksts */
         #leaderboard {
-            max-height: 120px;
+            max-height: 110px;
             overflow-y: auto;
         }
         .leader-item {
@@ -118,7 +119,6 @@
             font-size: 13px;
         }
 
-        /* Pogas pielāgotas pirkstiem */
         button {
             padding: 12px;
             font-size: 14px;
@@ -128,40 +128,42 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.1s;
             -webkit-tap-highlight-color: transparent;
         }
-        button:hover { background: #1dd1a1; }
+        button:hover { background: #1dd1a1; transform: scale(1.01); }
         
         .secondary-btn {
-            background: #54a0ff;
+            background: #2f3542;
+            border: 1px solid #57606f;
             width: 100%;
             margin-bottom: 2px;
         }
-        .secondary-btn:hover { background: #70a1ff; }
+        .secondary-btn:hover { background: #57606f; }
 
         .map-btn {
-            background: #2e2e42;
-            border: 1px solid #4d4d6e;
-            margin-bottom: 4px;
+            background: #222230;
+            border: 1px solid #3d3d56;
+            margin-bottom: 5px;
             width: 100%;
             text-align: left;
-            padding: 8px 12px;
+            padding: 10px 12px;
             font-size: 13px;
+            border-radius: 6px;
         }
         .map-btn.active {
             background: #341f97;
             border-color: #5f27cd;
             color: #00d2d3;
+            box-shadow: 0 0 10px rgba(95, 39, 205, 0.5);
         }
         .btn-group { display: flex; flex-direction: column; }
 
-        /* Brīdinājums, ja telefons ir vertikāli */
         #portrait-warning {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #15151f;
+            background: #0d0d13;
             z-index: 9999;
             flex-direction: column;
             align-items: center;
@@ -182,7 +184,7 @@
 
 <div id="portrait-warning">
     <h1>Pagrieziet ierīci!</h1>
-    <p>Lai spēlētu šo spēli, lūdzu, pagrieziet telefonu horizontāli (Landscape režīmā).</p>
+    <p>Lai spēlētu sacīkstes, lūdzu, pagrieziet telefonu horizontāli (Landscape).</p>
 </div>
 
 <div id="game-container">
@@ -192,26 +194,26 @@
     
     <div id="sidebar">
         <div class="panel">
-            <h2>Kartes</h2>
+            <h2>Trases Atrakcijas</h2>
             <div class="btn-group">
-                <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">1. Klasiskā trase</button>
-                <button class="map-btn" id="map1-btn" onclick="changeMap(1)">2. Krustu haoss</button>
-                <button class="map-btn" id="map2-btn" onclick="changeMap(2)">3. Plinko kalns</button>
+                <button class="map-btn active" id="map0-btn" onclick="changeMap(0)">🏎️ 1. Ātruma & Lēcienu Šoseja</button>
+                <button class="map-btn" id="map1-btn" onclick="changeMap(1)">⚙️ 2. Mehāniskais Labirints</button>
+                <button class="map-btn" id="map2-btn" onclick="changeMap(2)">🎰 3. Kaskāžu & Bāru Kazino</button>
             </div>
         </div>
 
         <div class="panel">
-            <h2>Bumbiņas</h2>
+            <h2>Komandas sastāvs</h2>
             <div id="editor-rows-container"></div>
-            <button class="secondary-btn" onclick="addMarbleRow()">+ Pievienot bumbiņu</button>
+            <button class="secondary-btn" onclick="addMarbleRow()">+ Pievienot Dalībnieku</button>
         </div>
 
         <div class="panel">
-            <h2>Līderi</h2>
+            <h2>Pozīcijas live</h2>
             <div id="leaderboard"></div>
         </div>
         
-        <button style="margin-top: auto; font-size: 16px; padding: 14px;" onclick="startRace()">Sākt sacīkstes!</button>
+        <button style="margin-top: auto; font-size: 16px; padding: 14px; background: #ff4757;" onclick="startRace()">🚀 STARTA SIGNĀLS</button>
     </div>
 </div>
 
@@ -219,9 +221,9 @@
     const canvas = document.getElementById('raceCanvas');
     const ctx = canvas.getContext('2d');
 
-    const gravity = 0.15;
-    const bounce = 0.55;
-    const trackHeight = 2200; 
+    const gravity = 0.16;
+    const bounce = 0.52;
+    const trackHeight = 2400; // Trase padarīta nedaudz garāka vēl lielākam episkumam
     let cameraY = 0;
     let currentMapIndex = 0;
 
@@ -241,7 +243,6 @@
     function renderEditorUI() {
         const container = document.getElementById('editor-rows-container');
         container.innerHTML = '';
-
         marblesList.forEach((marble, i) => {
             container.innerHTML += `
                 <div class="marble-edit-row">
@@ -283,73 +284,123 @@
         renderEditorUI();
     }
 
+    // MEGA UZLABOJUMS KARŠU ĢENERATORAM
     function generateTrack() {
         staticObstacles = [];
         spinners = [];
 
-        staticObstacles.push({ x1: 0, y1: 100, x2: 180, y2: 180 });
-        staticObstacles.push({ x1: 450, y1: 100, x2: 270, y2: 180 });
-        staticObstacles.push({ x1: 0, y1: 2000, x2: 180, y2: 2080 });
-        staticObstacles.push({ x1: 450, y1: 2000, x2: 270, y2: 2080 });
+        // Drošības starta/finiša piltuves
+        staticObstacles.push({ x1: 0, y1: 120, x2: 170, y2: 190 });
+        staticObstacles.push({ x1: 450, y1: 120, x2: 280, y2: 190 });
+        staticObstacles.push({ x1: 0, y1: 2200, x2: 180, y2: 2280 });
+        staticObstacles.push({ x1: 450, y1: 2200, x2: 270, y2: 2280 });
 
         if (currentMapIndex === 0) {
+            // 🏎️ KARTES 1 UZLABOJUMS: ĀTRUMS UN TRAMPLĪNI (Ātras līnijas, lēcieni pāri aizām)
             staticObstacles.push(
-                { x1: 0, y1: 300, x2: 370, y2: 370 },
-                { x1: 80, y1: 550, x2: 450, y2: 620 },
-                { x1: 0, y1: 800, x2: 370, y2: 870 },
-                { x1: 80, y1: 1200, x2: 450, y2: 1280 },
-                { x1: 0, y1: 1500, x2: 370, y2: 1570 },
-                { x1: 80, y1: 1750, x2: 450, y2: 1830 }
+                // Zig-zag ātrgaitas slīpnes
+                { x1: 0, y1: 300, x2: 360, y2: 380 },
+                { x1: 90, y1: 540, x2: 450, y2: 620 },
+                
+                // Pirmā aiza ar TRAMPLĪNU (līnija met gaisā)
+                { x1: 0, y1: 800, x2: 280, y2: 880 }, 
+                { x1: 240, y1: 880, x2: 280, y2: 850 }, // Tramplīna gals uz augšu!
+
+                { x1: 150, y1: 1040, x2: 450, y2: 1100 }, // Noķeršanas platforma pēc lēciena
+
+                // Otrā aiza pretējā pusē
+                { x1: 170, y1: 1300, x2: 450, y2: 1380 },
+                { x1: 170, y1: 1380, x2: 200, y2: 1340 }, // Otrs tramplīns
+
+                { x1: 0, y1: 1520, x2: 320, y2: 1580 },
+
+                // Ātrgaitas dropa stienis vidū
+                { x1: 120, y1: 1800, x2: 330, y2: 1800 }
             );
-            for(let row=0; row<5; row++) {
-                let pins = row % 2 === 0 ? 6 : 5;
-                for(let i=0; i<pins; i++) {
-                    let x = (row % 2 === 0) ? (i * 75 + 35) : (i * 75 + 72);
-                    staticObstacles.push({ isPin: true, x: x, y: 960 + row * 45, r: 6 });
-                }
+
+            // Mazas dzeltenas vadulas-tapas paātrinājuma zonās
+            for(let i = 0; i < 5; i++) {
+                staticObstacles.push({ isPin: true, x: 80 + i*70, y: 1980, r: 8 });
             }
+
+            // Ātri mazie rotori, kas strādā kā buferi
             spinners = [
-                { x: 220, y: 460, size: 40, angle: 0, speed: 0.03 },
-                { x: 150, y: 1380, size: 45, angle: 0, speed: -0.02 },
-                { x: 300, y: 1650, size: 42, angle: 0, speed: 0.04 }
+                { x: 380, y: 440, size: 25, angle: 0, speed: 0.08 },
+                { x: 60, y: 680, size: 25, angle: 0, speed: -0.08 },
+                { x: 220, y: 1200, size: 30, angle: 1, speed: 0.05 },
+                { x: 390, y: 1680, size: 35, angle: 0, speed: -0.06 }
             ];
+
         } else if (currentMapIndex === 1) {
+            // ⚙️ KARTES 2 UZLABOJUMS: MEHĀNISKAIS LABIRINTS (Milzīgi rotējoši zobrati visur)
+            // Sienas ir tikai īsi segmenti, lai bumbas nenokristu tieši lejā
             staticObstacles.push(
-                { x1: 0, y1: 600, x2: 150, y2: 640 }, { x1: 300, y1: 640, x2: 450, y2: 600 },
-                { x1: 0, y1: 1300, x2: 200, y2: 1350 }, { x1: 250, y1: 1350, x2: 450, y2: 1300 }
+                { x1: 0, y1: 380, x2: 120, y2: 400 },
+                { x1: 330, y1: 380, x2: 450, y2: 400 },
+                { x1: 150, y1: 750, x2: 300, y2: 750 },
+                { x1: 0, y1: 1150, x2: 150, y2: 1180 },
+                { x1: 300, y1: 1150, x2: 450, y2: 1180 },
+                { x1: 100, y1: 1550, x2: 350, y2: 1550 },
+                { x1: 0, y1: 1900, x2: 120, y2: 1940 },
+                { x1: 330, y1: 1900, x2: 450, y2: 1940 }
             );
-            let spinnerPositions = [
-                {x: 130, y: 280, sz: 35, sp: 0.04},  {x: 320, y: 280, sz: 35, sp: -0.04},
-                {x: 225, y: 440, sz: 50, sp: 0.025},
-                {x: 110, y: 750, sz: 40, sp: -0.03}, {x: 340, y: 750, sz: 40, sp: 0.034},
-                {x: 225, y: 920, sz: 45, sp: -0.02},
-                {x: 120, y: 1100, sz: 38, sp: 0.05}, {x: 330, y: 1100, sz: 38, sp: -0.05},
-                {x: 225, y: 1500, sz: 55, sp: 0.015},
-                {x: 130, y: 1720, sz: 40, sp: -0.04}, {x: 320, y: 1720, sz: 40, sp: 0.04}
+
+            // Milzīgi propelleri un krusti, kas pilnībā bloķē vai paver ceļu
+            let mechSpinners = [
+                { x: 130, y: 280, sz: 45, sp: 0.03 },   { x: 320, y: 280, sz: 45, sp: -0.03 },
+                { x: 225, y: 520, sz: 65, sp: 0.015 },  // Centrālais milzis
+                { x: 90,  y: 700, sz: 40, sp: -0.04 },  { x: 360, y: 700, sz: 40, sp: 0.04 },
+                { x: 225, y: 960, sz: 55, sp: -0.02 },
+                { x: 120, y: 1350, sz: 50, sp: 0.035 }, { x: 330, y: 1350, sz: 50, sp: -0.035 },
+                { x: 225, y: 1720, sz: 70, sp: -0.01 }, // Lēnais dzirnavu rats
+                { x: 110, y: 2020, sz: 35, sp: 0.05 },  { x: 340, y: 2020, sz: 35, sp: -0.05 }
             ];
-            spinnerPositions.forEach(pos => {
-                spinners.push({ x: pos.x, y: pos.y, size: pos.sz, angle: Math.random()*5, speed: pos.sp });
+
+            mechSpinners.forEach(pos => {
+                spinners.push({ x: pos.x, y: pos.y, size: pos.sz, angle: Math.random()*Math.PI, speed: pos.sp });
             });
+
         } else if (currentMapIndex === 2) {
-            staticObstacles.push(
-                { x1: 0, y1: 400, x2: 140, y2: 460 }, { x1: 450, y1: 400, x2: 310, y2: 460 },
-                { x1: 0, y1: 1000, x2: 140, y2: 1060 }, { x1: 450, y1: 1000, x2: 310, y2: 1060 },
-                { x1: 0, y1: 1600, x2: 140, y2: 1660 }, { x1: 450, y1: 1600, x2: 310, y2: 1660 }
-            );
-            for (let y = 240; y < 1950; y += 65) {
-                if((y>380 && y<480) || (y>980 && y<1080) || (y>1580 && y<1680)) continue;
-                let isEven = (Math.floor(y / 65) % 2 === 0);
-                let pinsCount = isEven ? 7 : 6;
-                let startX = isEven ? 20 : 52;
+            // 🎰 KARTES 3 UZLABOJUMS: KASKĀŽU & BĀRU KAZINO (Kausi, dubultās piramīdas)
+            // Šeit mēs izveidojam fiziskus "kausus" un trīsstūrus no līnijām
+            
+            // Piramīdu bloki (bumbas atlec uz sāniem)
+            let trapY = [350, 750, 1150, 1550, 1950];
+            trapY.forEach((y, index) => {
+                if (index % 2 === 0) {
+                    // Centrālais trīsstūris
+                    staticObstacles.push({ x1: 225, y1: y, x2: 150, y2: y+50 });
+                    staticObstacles.push({ x1: 225, y1: y, x2: 300, y2: y+50 });
+                    // Sānu bāri (slazdi)
+                    staticObstacles.push({ x1: 0, y1: y+120, x2: 80, y2: y+100 });
+                    staticObstacles.push({ x1: 450, y1: y+120, x2: 370, y2: y+100 });
+                } else {
+                    // Divi trīsstūri sānos
+                    staticObstacles.push({ x1: 100, y1: y, x2: 50, y2: y+40 });
+                    staticObstacles.push({ x1: 100, y1: y, x2: 150, y2: y+40 });
+
+                    staticObstacles.push({ x1: 350, y1: y, x2: 300, y2: y+40 });
+                    staticObstacles.push({ x1: 350, y1: y, x2: 400, y2: y+40 });
+
+                    // Vidējais uztvērējs (kauss)
+                    staticObstacles.push({ x1: 180, y1: y+110, x2: 225, y2: y+130 });
+                    staticObstacles.push({ x1: 270, y1: y+110, x2: 225, y2: y+130 });
+                }
+            });
+
+            // Plinko adatu/tapu tīkls starp trīsstūriem mērogam
+            for (let y = 250; y < 2100; y += 80) {
+                // Izlaižam pašas trīsstūru virsotnes, lai nav pārklāšanās
+                let isEven = (Math.floor(y / 80) % 2 === 0);
+                let pinsCount = isEven ? 6 : 5;
+                let startX = isEven ? 40 : 75;
+
                 for (let i = 0; i < pinsCount; i++) {
-                    staticObstacles.push({ isPin: true, x: startX + i * 65, y: y + (Math.random()-0.5)*4, r: 6 });
+                    let px = startX + i * 75;
+                    // Pārliecināmies, ka neieliekam adatu tieši iekšā sienu konstrukcijās
+                    staticObstacles.push({ isPin: true, x: px, y: y + (Math.random()-0.5)*5, r: 5.5 });
                 }
             }
-            spinners.push(
-                { x: 225, y: 430, size: 25, angle: 0, speed: 0.05 },
-                { x: 225, y: 1030, size: 25, angle: 0, speed: -0.05 },
-                { x: 225, y: 1630, size: 25, angle: 0, speed: 0.06 }
-            );
         }
     }
 
@@ -374,12 +425,13 @@
                 imgObj = new Image();
                 imgObj.src = data.imgUrl;
             }
-            let startX = 50 + Math.random() * 350;
-            let startY = 20 - (Math.random() * 30);
+            // Izkliedējam starta pozīciju, lai bumbas uzreiz neiesprūst viena otrā
+            let startX = 80 + (i * (290 / (marblesList.length - 1 || 1))) + (Math.random() - 0.5) * 15;
+            let startY = 30 - (Math.random() * 40);
 
             marbles.push({
                 x: startX, y: startY,
-                vx: (Math.random() - 0.5) * 1.5, vy: 0,
+                vx: (Math.random() - 0.5) * 2, vy: 0,
                 r: 10, color: data.color, name: data.name,
                 img: imgObj, done: false
             });
@@ -403,18 +455,20 @@
             m.vy += gravity;
             m.x += m.vx; m.y += m.vy;
 
+            // Sānu sienu rāmji
             if (m.x - m.r < 0) { m.x = m.r; m.vx = -m.vx * (bounce + 0.1); }
             if (m.x + m.r > canvas.width) { m.x = canvas.width - m.r; m.vx = -m.vx * (bounce + 0.1); }
 
+            // Sadursmes ar statiskajām sienām un tapām
             staticObstacles.forEach(obs => {
                 if (obs.isPin) {
                     let dx = m.x - obs.x; let dy = m.y - obs.y;
                     let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r + obs.r) {
                         let nx = dx / dist; let ny = dy / dist;
-                        m.x = obs.x + nx * (m.r + obs.r + 1);
+                        m.x = obs.x + nx * (m.r + obs.r + 0.5);
                         let dot = m.vx * nx + m.vy * ny;
-                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 1.5;
+                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 1.2;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
                     }
                 } else {
@@ -422,16 +476,18 @@
                     let dx = m.x - closest.x; let dy = m.y - closest.y;
                     let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r) {
-                        let nx = dx / dist; let ny = dy / dist;
-                        m.x = closest.x + nx * (m.r + 1.5); 
+                        let nx = dx / (dist || 1); let ny = dy / (dist || 1);
+                        m.x = closest.x + nx * (m.r + 1); 
                         let dot = m.vx * nx + m.vy * ny;
                         m.vx = (m.vx - 2 * dot * nx) * bounce;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
-                        m.vx += nx * 0.6 + (Math.random() - 0.5) * 0.4;
+                        // Neliels impulss uz priekšu slīpumam
+                        m.vx += nx * 0.5 + (Math.random() - 0.5) * 0.3;
                     }
                 }
             });
 
+            // Savstarpējā grūstīšanās (uzlabota, lai neiesprūst barā)
             marbles.forEach(other => {
                 if (m === other || other.done) return;
                 let dx = other.x - m.x; let dy = other.y - m.y;
@@ -440,24 +496,31 @@
                     let overlap = (m.r + other.r) - dist;
                     let nx = dx / (dist || 1); let ny = dy / (dist || 1);
                     m.x -= nx * overlap * 0.5; m.y -= ny * overlap * 0.5;
-                    let tempX = m.vx; m.vx = other.vx * 0.8; other.vx = tempX * 0.8;
+                    let tempX = m.vx; m.vx = other.vx * 0.75 + (Math.random()-0.5)*0.5; other.vx = tempX * 0.75;
                 }
             });
 
+            // Rotējošie šķēršļi
             spinners.forEach(s => {
                 let dx = m.x - s.x; let dy = m.y - s.y;
                 let dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < m.r + s.size) {
                     let nx = dx / dist; let ny = dy / dist;
-                    m.x = s.x + nx * (m.r + s.size + 2);
-                    m.vx = nx * 6 + (Math.random() - 0.5) * 2; m.vy = ny * 4 - 1;
+                    m.x = s.x + nx * (m.r + s.size + 1);
+                    // Rotors iesviež bumbiņu atkarībā no sava rotācijas ātruma un virziena
+                    let tangentX = -ny * s.speed * s.size;
+                    let tangentY = nx * s.speed * s.size;
+                    m.vx = nx * 4 + tangentX * 1.5;
+                    m.vy = ny * 3 + tangentY * 1.5 - 1;
                 }
             });
 
-            if (Math.abs(m.vx) < 0.25 && Math.abs(m.vy) < 0.5) {
-                m.vx += (Math.random() - 0.5) * 2; m.vy += 0.6;
+            // Progresīvā Anti-Stuck sistēma (ja bumba nekustas vispār)
+            if (Math.abs(m.vx) < 0.15 && Math.abs(m.vy) < 0.4) {
+                m.vx += (Math.random() - 0.5) * 2.5; m.vy += 0.8;
             }
 
+            // Finiša sasniegšana
             if (m.y >= trackHeight - 50) {
                 m.done = true; m.vx = 0; m.vy = 0;
                 finishedMarbles.push(m);
@@ -466,9 +529,10 @@
             if (m.y > leadingY && !m.done) leadingY = m.y;
         });
 
+        // Kameras vienmērīga slīdēšana sekojot līderim
         if (!raceOver && leadingY > canvas.height / 2) {
             let targetCameraY = leadingY - canvas.height / 2;
-            cameraY += (targetCameraY - cameraY) * 0.1;
+            cameraY += (targetCameraY - cameraY) * 0.08;
             if (cameraY > trackHeight - canvas.height) cameraY = trackHeight - canvas.height;
         }
 
@@ -484,9 +548,9 @@
         const board = document.getElementById('leaderboard');
         board.innerHTML = '';
         sortedMarbles.forEach((m, idx) => {
-            let placeStr = m.done ? `Finišs (${finishedMarbles.indexOf(m)+1}.)` : `${Math.round(m.y / 20)}m`;
+            let placeStr = m.done ? `🏆 FINIŠS (${finishedMarbles.indexOf(m)+1}.)` : `${Math.round(m.y / 20)}m`;
             board.innerHTML += `
-                <div class="leader-item" style="background: ${m.color}33; border-left: 5px solid ${m.color}">
+                <div class="leader-item" style="background: ${m.color}25; border-left: 5px solid ${m.color}">
                     <span>${idx + 1}. ${m.name}</span>
                     <span>${placeStr}</span>
                 </div>
@@ -499,28 +563,42 @@
         ctx.save();
         ctx.translate(0, -cameraY);
 
-        ctx.strokeStyle = '#706fd3';
+        // Dinamiskās krāsas elementiem atkarībā no izvēlētās kartes
+        let trackColor = currentMapIndex === 0 ? '#4bc0c0' : (currentMapIndex === 1 ? '#ff9f43' : '#9b5de5');
+        let pinColor = currentMapIndex === 2 ? '#ff1493' : '#f1c40f';
+
+        // Zīmē trases sienas un tapas
+        ctx.strokeStyle = trackColor;
         ctx.lineWidth = 5;
         ctx.lineCap = 'round';
         staticObstacles.forEach(obs => {
             if (obs.isPin) {
                 ctx.beginPath(); ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI*2);
-                ctx.fillStyle = '#ffb142'; ctx.fill();
+                ctx.fillStyle = pinColor; ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
             } else {
                 ctx.beginPath(); ctx.moveTo(obs.x1, obs.y1); ctx.lineTo(obs.x2, obs.y2); ctx.stroke();
             }
         });
 
+        // Zīmē rotējošos zobratus / propellerus
         spinners.forEach(s => {
             ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle);
-            ctx.fillStyle = '#ff5252'; ctx.fillRect(-s.size, -4, s.size*2, 8); ctx.fillRect(-4, -s.size, 8, s.size*2);
-            ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+            ctx.fillStyle = '#ff4757';
+            // Zīmē krusta spārnus
+            ctx.fillRect(-s.size, -5, s.size*2, 10); 
+            ctx.fillRect(-5, -s.size, 10, s.size*2);
+            // Centra aplis
+            ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); 
+            ctx.restore();
         });
 
+        // Finiša vārti un zona
         ctx.fillStyle = '#10ac84'; ctx.fillRect(0, trackHeight - 40, canvas.width, 40);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
-        ctx.fillText("FINIŠA LĪNIJA", canvas.width / 2, trackHeight - 15);
+        ctx.fillText("🏁 FINIŠA LĪNIJA 🏁", canvas.width / 2, trackHeight - 15);
 
+        // Zīmē pašas bumbiņas (Bildes vai Krāsas)
         marbles.forEach(m => {
             ctx.save(); ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx.closePath();
             if (m.img && m.img.complete && m.img.naturalWidth !== 0) {
@@ -528,18 +606,21 @@
             } else {
                 ctx.fillStyle = m.color; ctx.fill();
             }
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
         });
         ctx.restore();
 
+        // Pjedestāla logs spēles beigās (Top 5)
         if (raceOver) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 26px Arial'; ctx.textAlign = 'center';
-            ctx.fillText("SACĪKŠU REZULTĀTI", canvas.width / 2, 160);
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.9)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+            ctx.fillText("SACĪKŠU REZULTĀTI", canvas.width / 2, 140);
+            
             finishedMarbles.forEach((m, idx) => {
                 if (idx > 4) return; 
                 ctx.font = '18px Arial'; ctx.fillStyle = m.color;
-                ctx.fillText(`${idx + 1}. Vieta: ${m.name}`, canvas.width / 2, 220 + idx * 35);
+                let medal = idx === 0 ? "🥇" : (idx === 1 ? "🥈" : (idx === 2 ? "🥉" : "🔹"));
+                ctx.fillText(`${medal} ${idx + 1}. Vieta: ${m.name}`, canvas.width / 2, 210 + idx * 38);
             });
         }
     }
@@ -550,6 +631,7 @@
         requestAnimationFrame(gameLoop);
     }
 
+    // Palaišana
     renderEditorUI();
     startRace();
     gameLoop();

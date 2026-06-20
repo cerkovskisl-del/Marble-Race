@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ultimate Marble Neon Grand Prix</title>
+    <title>Ultimate Marble Neon Grand Prix - Fixed Physics</title>
     <style>
         * {
             box-sizing: border-box;
@@ -41,7 +41,6 @@
             box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
         }
 
-        /* Sidebar UI */
         #sidebar {
             width: 350px; height: 100%;
             background: #0a0a0f;
@@ -180,7 +179,6 @@
     const canvas = document.getElementById('raceCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Retro Sound Synth
     let audioCtx = null;
     function playSound(freq, type="sine", duration=0.05, volume=0.06) {
         try {
@@ -197,7 +195,7 @@
 
     const gravity = 0.25;
     const bounce = 0.35;
-    const friction = 0.99;
+    const friction = 0.992;
     const trackHeight = 2400; 
     let cameraY = 0;
     let currentMapIndex = 0;
@@ -258,24 +256,25 @@
         marblesList.splice(index, 1); renderEditorUI();
     }
 
-    // MAP MAKER WITH PRECISE DESIGN PATTERNS
     function generateTrack() {
         staticObstacles = []; spinners = []; speedPads = [];
 
-        // Safety funnels at entry and exit gates
+        // Outer entrance and exit funnels
         staticObstacles.push({ x1: -10, y1: 120, x2: 190, y2: 160 }, { x1: 470, y1: 120, x2: 270, y2: 160 });
         staticObstacles.push({ x1: -10, y1: 2260, x2: 190, y2: 2310 }, { x1: 470, y1: 2260, x2: 270, y2: 2310 });
 
         if (currentMapIndex === 0) {
-            // MAP 1: NEON SPEED HIGHWAY (Safe open slopes with integrated boosters)
+            // MAP 1: NEON SPEED HIGHWAY
             for (let y = 260; y < 2100; y += 280) {
-                // Left to right ramp (Stops early to guarantee huge gap at the wall)
-                staticObstacles.push({ x1: 0, y1: y, x2: 370, y2: y + 80 });
-                speedPads.push({ x: 140, y: y + 25, w: 70, h: 10, targetRampIdx: staticObstacles.length - 1, dirX: 1 });
+                // Left to right ramp (Slants DOWNwards towards the right wall, stopping early)
+                staticObstacles.push({ x1: 0, y1: y, x2: 370, y2: y + 90 });
+                // FIX: Speed pad is forced to push DOWN the slope (dirX = 1 means towards x2)
+                speedPads.push({ x: 120, y: y + 20, w: 70, h: 10, targetRampIdx: staticObstacles.length - 1, dirX: 1 });
 
-                // Right to left ramp
-                staticObstacles.push({ x1: 460, y1: y + 140, x2: 90, y2: y + 220 });
-                speedPads.push({ x: 250, y: y + 165, w: 70, h: 10, targetRampIdx: staticObstacles.length - 1, dirX: -1 });
+                // Right to left ramp (Slants DOWNwards towards the left wall)
+                staticObstacles.push({ x1: 460, y1: y + 140, x2: 90, y2: y + 230 });
+                // FIX: Speed pad is forced to push DOWN the slope (dirX = -1 means towards x2)
+                speedPads.push({ x: 250, y: y + 160, w: 70, h: 10, targetRampIdx: staticObstacles.length - 1, dirX: 1 });
             }
         } else if (currentMapIndex === 1) {
             // MAP 2: KINETIC PROPELLER CHAOS
@@ -344,16 +343,14 @@
         marbles.forEach(m => {
             if (m.done) return;
 
-            // Apply Basic Physics Laws
             m.vy += gravity;
             m.vx *= friction; m.vy *= friction;
             m.x += m.vx; m.y += m.vy;
 
-            // Trail rendering management
             m.trail.push({x: m.x, y: m.y});
             if(m.trail.length > 6) m.trail.shift();
 
-            // BUGFIX 1: Hard Wall Boundaries (No visual clipping)
+            // Strict Border Wall Boundaries
             if (m.x - m.r < 5) { 
                 m.x = m.r + 5; m.vx = Math.abs(m.vx) * bounce; 
                 playSound(260, "sine", 0.01, 0.03); 
@@ -363,13 +360,13 @@
                 playSound(260, "sine", 0.01, 0.03); 
             }
 
-            // BUGFIX 2: Advanced Vector Ramp Reflection & Rolling Force Engine
+            // Advanced Line Collision & Slope Sliding Physics
             staticObstacles.forEach(obs => {
                 if (obs.isPin) {
                     let dx = m.x - obs.x; let dy = m.y - obs.y; let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r + obs.r) {
                         let nx = dx / dist; let ny = dy / dist;
-                        m.x = obs.x + nx * (m.r + obs.r + 0.5); // Push out safety boundary
+                        m.x = obs.x + nx * (m.r + obs.r + 0.5); 
                         let dot = m.vx * nx + m.vy * ny;
                         m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 0.6;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
@@ -382,7 +379,7 @@
                     if (dist < m.r) {
                         let nx = dx / (dist || 1); let ny = dy / (dist || 1);
                         
-                        // Enforce bobby-guard position only if hitting line from top side
+                        // Push marble out cleanly perpendicular to the line
                         m.x = closest.x + nx * (m.r + 0.2);
                         m.y = closest.y + ny * (m.r + 0.2);
 
@@ -390,20 +387,20 @@
                         m.vx = (m.vx - 2 * dot * nx) * bounce;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
 
-                        // Slide Engine: Create downstream directional acceleration vector
+                        // Gravity vector projection onto the ramp slope line
                         let rx = obs.x2 - obs.x1; let ry = obs.y2 - obs.y1;
                         let rLen = Math.sqrt(rx*rx + ry*ry);
                         if(rLen > 0) {
                             let tx = rx / rLen; let ty = ry / rLen;
-                            // Add velocity alongside the vector angle of the line down
-                            m.vx += tx * 0.32; m.vy += ty * 0.32; 
+                            // Guaranteed acceleration downwards towards (x2, y2)
+                            m.vx += tx * 0.35; m.vy += ty * 0.35; 
                         }
                         playSound(200, "sine", 0.01, 0.03);
                     }
                 }
             });
 
-            // BUGFIX 3: Safe Embedded Overlay Speed Booster Pads
+            // CRITICAL BUGFIX: Smart Acceleration Boosters (Ramp-Relative Alignment)
             speedPads.forEach(pad => {
                 let ramp = staticObstacles[pad.targetRampIdx];
                 if (ramp) {
@@ -411,18 +408,20 @@
                     let dx = m.x - closest.x; let dy = m.y - closest.y;
                     let distToRamp = Math.sqrt(dx*dx + dy*dy);
 
-                    // Check if marble is riding near the pad's horizontal span
+                    // Check if marble is riding inside the booster zone bounding box
                     if (distToRamp < m.r + 12 && m.x > pad.x && m.x < pad.x + pad.w) {
                         let rx = ramp.x2 - ramp.x1; let ry = ramp.y2 - ramp.y1;
                         let rLen = Math.sqrt(rx*rx + ry*ry);
-                        m.vx += (rx / rLen) * 0.65 * pad.dirX;
-                        m.vy += (ry / rLen) * 0.65;
-                        playSound(580, "triangle", 0.05, 0.05);
+                        
+                        // Dynamically push the marble DOWN the ramp gradient vector (Never back up!)
+                        m.vx += (rx / rLen) * 0.95 * pad.dirX;
+                        m.vy += (ry / rLen) * 0.95;
+                        playSound(580, "triangle", 0.04, 0.05);
                     }
                 }
             });
 
-            // Rotators & Kinetic Gears Collision
+            // Mechanical Gears & Propellers Physics
             spinners.forEach(s => {
                 let dx = m.x - s.x; let dy = m.y - s.y; let dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < m.r + s.size) {
@@ -434,7 +433,7 @@
                 }
             });
 
-            // Marble vs Marble standard elastic impacts
+            // Marble vs Marble basic body collision distribution
             marbles.forEach(other => {
                 if (m === other || other.done) return;
                 let dx = other.x - m.x; let dy = other.y - m.y; let dist = Math.sqrt(dx*dx + dy*dy);
@@ -446,17 +445,18 @@
                 }
             });
 
-            // Ultimate Anti-Stuck Fail Safe Grid
-            if (Math.abs(m.vx) < 0.15 && Math.abs(m.vy) < 0.2) {
+            // Dynamic Anti-Stuck Safeguard Grid (Unstuck Trigger)
+            if (Math.abs(m.vx) < 0.2 && Math.abs(m.vy) < 0.25) {
                 m.stuckTimer++;
-                if (m.stuckTimer > 20) { // If stagnant for roughly ~0.4s
-                    m.vx += (Math.random() > 0.5 ? 2.2 : -2.2);
-                    m.vy -= 1.0; 
+                if (m.stuckTimer > 18) { // Activated within 0.35s of stalling
+                    // Gives an intentional forward push down the track layout
+                    m.vx += (Math.random() > 0.5 ? 2.5 : -2.5);
+                    m.vy += 1.5; 
                     m.stuckTimer = 0;
                 }
             } else { m.stuckTimer = 0; }
 
-            // Finish Gate
+            // Finish Line
             if (m.y >= trackHeight - 40) {
                 m.done = true; m.vx = 0; m.vy = 0; finishedMarbles.push(m);
                 playSound(520 + (finishedMarbles.length * 60), "sine", 0.2, 0.08); 
@@ -465,7 +465,7 @@
             if (m.y > leadingY && !m.done) leadingY = m.y;
         });
 
-        // Smooth Linear Interpolation Camera Movement
+        // Camera Tracking
         if (!raceOver && leadingY > canvas.height / 2) {
             let targetY = leadingY - canvas.height / 2;
             cameraY += (targetY - cameraY) * 0.15;
@@ -497,17 +497,22 @@
 
         let themeColor = currentMapIndex === 0 ? '#00d2d3' : (currentMapIndex === 1 ? '#ff9f43' : '#a29bfe');
         
-        // Render Embedded Speed Boost Neon Highlights
+        // Render Embedded Boosters (Arrows adapt to the ramp's flow direction)
         speedPads.forEach(pad => {
-            ctx.save();
-            ctx.shadowBlur = 10; ctx.shadowColor = '#ff4757';
-            ctx.fillStyle = '#ff4757'; ctx.fillRect(pad.x, pad.y, pad.w, pad.h);
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Arial';
-            ctx.fillText(pad.dirX > 0 ? ">>>" : "<<<", pad.x + 14, pad.y + 8);
-            ctx.restore();
+            let ramp = staticObstacles[pad.targetRampIdx];
+            if(ramp) {
+                ctx.save();
+                ctx.shadowBlur = 10; ctx.shadowColor = '#ff4757';
+                ctx.fillStyle = '#ff4757'; ctx.fillRect(pad.x, pad.y, pad.w, pad.h);
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Arial';
+                // Automatically points in the downwards slope vector
+                let arrowText = (ramp.x2 > ramp.x1) ? ">>>" : "<<<";
+                ctx.fillText(arrowText, pad.x + 14, pad.y + 8);
+                ctx.restore();
+            }
         });
 
-        // Rails & Obstacles with Neon Bloom Effect
+        // Neon Slopes & Static Lines
         ctx.save();
         ctx.shadowBlur = 6; ctx.shadowColor = themeColor;
         ctx.strokeStyle = themeColor; ctx.lineWidth = 6; ctx.lineCap = 'round';
@@ -521,7 +526,7 @@
         });
         ctx.restore();
 
-        // Kinetic Propellers/Spinners
+        // Spinners
         spinners.forEach(s => {
             ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle);
             ctx.shadowBlur = 8; ctx.shadowColor = '#00d2d3';
@@ -529,12 +534,12 @@
             ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
         });
 
-        // Finish Gate UI
+        // Goal Checkered Zone
         ctx.fillStyle = '#10ac84'; ctx.fillRect(0, trackHeight - 40, canvas.width, 40);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
         ctx.fillText("⚡ NEON FINISH ZONE ⚡", canvas.width / 2, trackHeight - 15);
 
-        // Marbles Spheres + 3D Radial Highlighting
+        // Render Spheres with Dynamic Radial Shades & Custom Trails
         marbles.forEach(m => {
             m.trail.forEach((p, idx) => {
                 ctx.beginPath(); ctx.arc(p.x, p.y, m.r * (idx / m.trail.length), 0, Math.PI*2);
@@ -553,7 +558,7 @@
         });
         ctx.restore();
 
-        // Grand Prix Podium Announcement Layer
+        // Podiums
         if (raceOver) {
             ctx.fillStyle = 'rgba(2, 2, 4, 0.96)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';

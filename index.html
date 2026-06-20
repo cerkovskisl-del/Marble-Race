@@ -40,7 +40,6 @@
             box-shadow: 0 0 35px rgba(0, 0, 0, 0.8);
         }
 
-        /* Sidebar UI */
         #sidebar {
             width: 350px; height: 100%;
             background: #0e0e14;
@@ -113,9 +112,7 @@
             background: #12121a; border: 1px solid #222232; margin-bottom: 5px;
             width: 100%; text-align: left; padding: 10px 12px; font-size: 13px; border-radius: 8px; color: #a4b0be;
         }
-        .map-btn.active {
-            background: #341f97; border-color: #5f27cd; color: #00d2d3;
-        }
+        .map-btn.active { background: #341f97; border-color: #5f27cd; color: #00d2d3; }
 
         #portrait-warning {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -177,9 +174,8 @@
     const canvas = document.getElementById('raceCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Synth Sound Player
     let audioCtx = null;
-    function playSound(freq, type="sine", duration=0.08, volume=0.1) {
+    function playSound(freq, type="sine", duration=0.06, volume=0.08) {
         try {
             if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             let osc = audioCtx.createOscillator();
@@ -192,8 +188,8 @@
         } catch(e){}
     }
 
-    const gravity = 0.18;
-    const bounce = 0.45;
+    const gravity = 0.22;
+    const bounce = 0.4;
     const trackHeight = 2400; 
     let cameraY = 0;
     let currentMapIndex = 0;
@@ -254,40 +250,41 @@
         marblesList.splice(index, 1); renderEditorUI();
     }
 
-    // MAP SETUP (Cleaned layouts to minimize bugs)
     function generateTrack() {
         staticObstacles = []; spinners = []; speedPads = [];
 
-        // Outer bounds funnel at start/finish
-        staticObstacles.push({ x1: 0, y1: 100, x2: 160, y2: 150 }, { x1: 460, y1: 100, x2: 300, y2: 150 });
-        staticObstacles.push({ x1: 0, y1: 2250, x2: 160, y2: 2320 }, { x1: 460, y1: 2250, x2: 300, y2: 2320 });
+        // Main upper and lower funnels to guide marbles safely
+        staticObstacles.push({ x1: 0, y1: 100, x2: 180, y2: 150 }, { x1: 460, y1: 100, x2: 280, y2: 150 });
+        staticObstacles.push({ x1: 0, y1: 2260, x2: 180, y2: 2320 }, { x1: 460, y1: 2260, x2: 280, y2: 2320 });
 
         if (currentMapIndex === 0) {
-            // MAP 1: SPEED HIGHWAY (Zig-Zag slopes)
+            // MAP 1: FIXED SPEED HIGHWAY (Optimized slopes & safe margins)
             for (let y = 250; y < 2100; y += 300) {
-                staticObstacles.push({ x1: 0, y1: y, x2: 340, y2: y + 80 });
-                speedPads.push({ x: 80, y: y + 30, w: 70, h: 12, vx: 4 });
-                
-                staticObstacles.push({ x1: 460, y1: y + 150, x2: 120, y2: y + 230 });
-                speedPads.push({ x: 310, y: y + 180, w: 70, h: 12, vx: -4 });
+                // Left-to-right ramp (stopping 60px before right wall to prevent sticking)
+                staticObstacles.push({ x1: 0, y1: y, x2: 380, y2: y + 95 });
+                speedPads.push({ x: 120, y: y + 10, w: 60, h: 10, vx: 5, vy: 1.2 });
+
+                // Right-to-left ramp (stopping 60px after left wall)
+                staticObstacles.push({ x1: 460, y1: y + 150, x2: 80, y2: y + 245 });
+                speedPads.push({ x: 260, y: y + 160, w: 60, h: 10, vx: -5, vy: 1.2 });
             }
         } else if (currentMapIndex === 1) {
             // MAP 2: PROPELLER CHAOS
             for (let y = 280; y < 2100; y += 280) {
-                staticObstacles.push({ x1: 0, y1: y, x2: 180, y2: y + 40 });
-                staticObstacles.push({ x1: 460, y1: y, x2: 280, y2: y + 40 });
-                spinners.push({ x: 230, y: y + 130, size: 45, angle: Math.random(), speed: 0.05 });
-                spinners.push({ x: 70, y: y + 220, size: 30, angle: Math.random(), speed: -0.07 });
-                spinners.push({ x: 390, y: y + 220, size: 30, angle: Math.random(), speed: 0.07 });
+                staticObstacles.push({ x1: 0, y1: y, x2: 160, y2: y + 40 });
+                staticObstacles.push({ x1: 460, y1: y, x2: 300, y2: y + 40 });
+                spinners.push({ x: 230, y: y + 120, size: 45, angle: Math.random(), speed: 0.05 });
+                spinners.push({ x: 80, y: y + 210, size: 30, angle: Math.random(), speed: -0.06 });
+                spinners.push({ x: 380, y: y + 210, size: 30, angle: Math.random(), speed: 0.06 });
             }
         } else if (currentMapIndex === 2) {
             // MAP 3: PLINKO CASCADE
-            for (let y = 250; y < 2150; y += 70) {
-                let isEven = (Math.floor(y / 70) % 2 === 0);
+            for (let y = 250; y < 2150; y += 75) {
+                let isEven = (Math.floor(y / 75) % 2 === 0);
                 let count = isEven ? 6 : 5;
-                let startX = isEven ? 45 : 85;
+                let startX = isEven ? 50 : 90;
                 for (let i = 0; i < count; i++) {
-                    staticObstacles.push({ isPin: true, x: startX + i * 74, y: y, r: 7 });
+                    staticObstacles.push({ isPin: true, x: startX + i * 72, y: y, r: 7 });
                 }
             }
         }
@@ -311,21 +308,23 @@
 
         marblesList.forEach((data, i) => {
             let imgObj = null; if (data.imgUrl !== '') { imgObj = new Image(); imgObj.src = data.imgUrl; }
-            let startX = 100 + (i * (260 / (marblesList.length - 1 || 1)));
+            let startX = 120 + (i * (220 / (marblesList.length - 1 || 1)));
             marbles.push({
-                x: startX, y: 30 - (i * 20),
-                vx: (Math.random() - 0.5) * 2, vy: 1,
+                x: startX, y: 30 - (i * 24),
+                vx: (Math.random() - 0.5) * 1.5, vy: 1,
                 r: 10, color: data.color, name: data.name,
                 img: imgObj, done: false,
                 stuckTimer: 0, trail: []
             });
         });
-        playSound(400, "square", 0.1, 0.2);
+        playSound(440, "square", 0.12, 0.15);
     }
 
     function getClosestPointOnLine(px, py, x1, y1, x2, y2) {
         let abx = x2 - x1; let aby = y2 - y1;
-        let t = Math.max(0, Math.min(1, ((px - x1) * abx + (py - y1) * aby) / (abx * abx + aby * aby)));
+        let t = (px - x1) * abx + (py - y1) * aby;
+        let lenSq = abx * abx + aby * aby;
+        t = Math.max(0, Math.min(1, t / lenSq));
         return { x: x1 + t * abx, y: y1 + t * aby };
     }
 
@@ -336,66 +335,83 @@
         marbles.forEach(m => {
             if (m.done) return;
 
-            // Apply gravity and movement
             m.vy += gravity;
             m.x += m.vx; m.y += m.vy;
 
-            // Trail positions
             m.trail.push({x: m.x, y: m.y});
             if(m.trail.length > 6) m.trail.shift();
 
-            // Strict Border Collisions (Prevents clipping through outer walls)
-            if (m.x - m.r < 0) { m.x = m.r; m.vx = Math.abs(m.vx) * bounce; playSound(300, "sine", 0.02); }
-            if (m.x + m.r > canvas.width) { m.x = canvas.width - m.r; m.vx = -Math.abs(m.vx) * bounce; playSound(300, "sine", 0.02); }
+            // BUGFIX 1: Safe boundary wall handling + corner anti-stick push out
+            if (m.x - m.r < 4) { 
+                m.x = m.r + 4; m.vx = Math.abs(m.vx) * bounce + 0.5; 
+                playSound(280, "sine", 0.02, 0.04); 
+            }
+            if (m.x + m.r > canvas.width - 4) { 
+                m.x = canvas.width - m.r - 4; m.vx = -Math.abs(m.vx) * bounce - 0.5; 
+                playSound(280, "sine", 0.02, 0.04); 
+            }
 
-            // Speed pads logic
-            speedPads.forEach(pad => {
-                if(m.x > pad.x && m.x < pad.x + pad.w && m.y > pad.y - m.r && m.y < pad.y + pad.h + m.r) {
-                    m.vx += pad.vx * 0.25;
-                    playSound(500, "triangle", 0.05, 0.08);
-                }
-            });
-
-            // Obstacle & Plinko Pegs Physics
+            // BUGFIX 2: Perfect Ramp Physics & Sliding acceleration Vector
             staticObstacles.forEach(obs => {
                 if (obs.isPin) {
                     let dx = m.x - obs.x; let dy = m.y - obs.y; let dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < m.r + obs.r) {
                         let nx = dx / dist; let ny = dy / dist;
-                        m.x = obs.x + nx * (m.r + obs.r + 0.5); // Push out immediately
+                        m.x = obs.x + nx * (m.r + obs.r + 0.5);
                         let dot = m.vx * nx + m.vy * ny;
-                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5);
+                        m.vx = (m.vx - 2 * dot * nx) * bounce + (Math.random() - 0.5) * 0.8;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
-                        playSound(350 + Math.random()*200, "sine", 0.02, 0.05);
+                        playSound(350, "sine", 0.02, 0.04);
                     }
                 } else {
                     let closest = getClosestPointOnLine(m.x, m.y, obs.x1, obs.y1, obs.x2, obs.y2);
                     let dx = m.x - closest.x; let dy = m.y - closest.y; let dist = Math.sqrt(dx*dx + dy*dy);
+                    
                     if (dist < m.r) {
                         let nx = dx / (dist || 1); let ny = dy / (dist || 1);
-                        m.x = closest.x + nx * (m.r + 0.5); // Push out safely
+                        
+                        // Force push out above the slope line
+                        if (ny < 0) {
+                            m.x = closest.x + nx * (m.r + 0.2);
+                            m.y = closest.y + ny * (m.r + 0.2);
+                        }
+
                         let dot = m.vx * nx + m.vy * ny;
                         m.vx = (m.vx - 2 * dot * nx) * bounce;
                         m.vy = (m.vy - 2 * dot * ny) * bounce;
-                        m.vx += nx * 0.2; // Add a tiny roll push down the ramp
-                        playSound(250, "sine", 0.03, 0.06);
+
+                        // Slide vector calculation to accelerate smoothly down slopes
+                        let rx = obs.x2 - obs.x1; let ry = obs.y2 - obs.y1;
+                        let rLen = Math.sqrt(rx*rx + ry*ry);
+                        if(rLen > 0) {
+                            let tx = rx / rLen; let ty = ry / rLen;
+                            m.vx += tx * 0.28; m.vy += ty * 0.28; // Natural gravity acceleration vector
+                        }
+                        playSound(220, "sine", 0.02, 0.03);
                     }
                 }
             });
 
-            // Spinners/Gears Physics
+            // BUGFIX 3: Repositioned speed pads (Guaranteed overlay triggers)
+            speedPads.forEach(pad => {
+                if(m.x > pad.x && m.x < pad.x + pad.w && m.y > pad.y - m.r && m.y < pad.y + pad.h + m.r) {
+                    m.vx += pad.vx * 0.2;
+                    m.vy += pad.vy * 0.2;
+                    playSound(600, "triangle", 0.04, 0.06);
+                }
+            });
+
             spinners.forEach(s => {
                 let dx = m.x - s.x; let dy = m.y - s.y; let dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < m.r + s.size) {
                     let nx = dx / dist; let ny = dy / dist;
-                    m.x = s.x + nx * (m.r + s.size + 1);
+                    m.x = s.x + nx * (m.r + s.size + 0.5);
                     let tx = -ny * s.speed * s.size; let ty = nx * s.speed * s.size;
-                    m.vx = nx * 2 + tx * 1.2; m.vy = ny * 2 + ty * 1.2;
+                    m.vx = nx * 2.2 + tx * 1.3; m.vy = ny * 1.8 + ty * 1.3;
                     playSound(400, "sawtooth", 0.04, 0.05);
                 }
             });
 
-            // Marble vs Marble pushing
             marbles.forEach(other => {
                 if (m === other || other.done) return;
                 let dx = other.x - m.x; let dy = other.y - m.y; let dist = Math.sqrt(dx*dx + dy*dy);
@@ -403,35 +419,33 @@
                     let overlap = (m.r + other.r) - dist;
                     let nx = dx / (dist || 1); let ny = dy / (dist || 1);
                     m.x -= nx * overlap * 0.5; m.y -= ny * overlap * 0.5;
-                    let tempX = m.vx; m.vx = other.vx * 0.8; other.vx = tempX * 0.8;
+                    let tempX = m.vx; m.vx = other.vx * 0.75; other.vx = tempX * 0.75;
                 }
             });
 
-            // Robust Anti-Stuck Check (If speed is close to 0, start timer)
-            if (Math.abs(m.vx) < 0.2 && Math.abs(m.vy) < 0.3) {
-                m.stuckTimer += 1;
-                if (m.stuckTimer > 30) { // Stalled for ~0.5 seconds
-                    m.vx += (Math.random() - 0.5) * 3;
-                    m.vy -= 1; // Little jump up
+            // Ultra anti-stuck grid algorithm
+            if (Math.abs(m.vx) < 0.15 && Math.abs(m.vy) < 0.25) {
+                m.stuckTimer++;
+                if (m.stuckTimer > 25) { 
+                    m.vx += (Math.random() > 0.5 ? 1.8 : -1.8);
+                    m.vy -= 1.2;
                     m.stuckTimer = 0;
                 }
             } else {
                 m.stuckTimer = 0;
             }
 
-            // Finish Line Zone Check
             if (m.y >= trackHeight - 40) {
                 m.done = true; m.vx = 0; m.vy = 0; finishedMarbles.push(m);
-                playSound(500 + (finishedMarbles.length * 60), "sine", 0.2, 0.1); 
+                playSound(520 + (finishedMarbles.length * 60), "sine", 0.2, 0.1); 
                 if (finishedMarbles.length === marbles.length) raceOver = true;
             }
             if (m.y > leadingY && !m.done) leadingY = m.y;
         });
 
-        // Smooth Camera movement
         if (!raceOver && leadingY > canvas.height / 2) {
             let targetY = leadingY - canvas.height / 2;
-            cameraY += (targetY - cameraY) * 0.1;
+            cameraY += (targetY - cameraY) * 0.12;
             if (cameraY > trackHeight - canvas.height) cameraY = trackHeight - canvas.height;
         }
 
@@ -460,13 +474,15 @@
 
         let mapThemeColor = currentMapIndex === 0 ? '#00d2d3' : (currentMapIndex === 1 ? '#ff9f43' : '#a29bfe');
         
-        // Boost fields
+        // Speed Booster pads (Rendered beautifully over tracks)
         speedPads.forEach(pad => {
-            ctx.fillStyle = '#00ff00'; ctx.fillRect(pad.x, pad.y, pad.w, pad.h);
+            ctx.fillStyle = '#ff4757'; ctx.fillRect(pad.x, pad.y, pad.w, pad.h);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 9px Arial';
+            ctx.fillText(pad.vx > 0 ? ">>>" : "<<<", pad.x + 12, pad.y + 8);
         });
 
-        // Static Walls and Rails
-        ctx.strokeStyle = mapThemeColor; ctx.lineWidth = 5; ctx.lineCap = 'round';
+        // Fixed Physics Lines & Rails
+        ctx.strokeStyle = mapThemeColor; ctx.lineWidth = 6; ctx.lineCap = 'round';
         staticObstacles.forEach(obs => {
             if (obs.isPin) {
                 ctx.beginPath(); ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI*2);
@@ -476,19 +492,16 @@
             }
         });
 
-        // Spinning Propellers
         spinners.forEach(s => {
-            ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle); ctx.fillStyle = '#ff4757';
+            ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle); ctx.fillStyle = '#00d2d3';
             ctx.fillRect(-s.size, -4, s.size*2, 8); ctx.fillRect(-4, -s.size, 8, s.size*2);
             ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
         });
 
-        // Finish Line Graphics
         ctx.fillStyle = '#10ac84'; ctx.fillRect(0, trackHeight - 40, canvas.width, 40);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
         ctx.fillText("⚡ FINISH LINE ⚡", canvas.width / 2, trackHeight - 15);
 
-        // Marbles with Shading & Trails
         marbles.forEach(m => {
             m.trail.forEach((p, idx) => {
                 ctx.beginPath(); ctx.arc(p.x, p.y, m.r * (idx / m.trail.length), 0, Math.PI*2);
@@ -507,7 +520,6 @@
         });
         ctx.restore();
 
-        // Podiums screen
         if (raceOver) {
             ctx.fillStyle = 'rgba(4, 4, 7, 0.95)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#00d2d3'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
